@@ -170,6 +170,7 @@ import java.util.*;
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.name+"\n");
+        sb.append("----------------------------------------");
         for(Integer i : this.pageNums){
             try {
                 sb.append(getPageByNumber(i)+"\n");

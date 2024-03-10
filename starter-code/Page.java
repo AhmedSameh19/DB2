@@ -40,6 +40,7 @@ public class Page implements Serializable {
         for(Row r: row){
             sb.append(r+"\n");
         }
+        sb.append("----------------------------------------"+"\n");
         return sb.toString() ;
     }
     // public static void main(String[] args) {
