@@ -266,7 +266,6 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 		StringBuilder sb = new StringBuilder();
         for(String i : tableNames){
             try {
-				System.out.println(i);
                 sb.append(getTable(i)+"\n");
             } catch (Exception e) {
                 try {

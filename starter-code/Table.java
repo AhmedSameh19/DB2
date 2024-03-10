@@ -166,12 +166,12 @@ import java.util.*;
             throw new DBAppException(e);
         }
     }
-   
+    
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.name+"\n");
-        sb.append("----------------------------------------");
-        for(Integer i : this.pageNums){
+        sb.append(String.format("-----------------------%s------------------------- \n",this.name)); 
+               for(Integer i : this.pageNums){
             try {
                 sb.append(getPageByNumber(i)+"\n");
             } catch (Exception e) {

@@ -36,11 +36,11 @@ public class Page implements Serializable {
     }
     public String toString(){
         StringBuilder sb=new StringBuilder("");
-        sb.append("Page "+getPageNumber()+"\n");
+        sb.append(String.format("----------------Start of Page %d------------------------ \n",pageNumber));
         for(Row r: row){
             sb.append(r+"\n");
         }
-        sb.append("----------------------------------------"+"\n");
+        sb.append(String.format("----------------End of Page %d------------------------ \n",pageNumber));
         return sb.toString() ;
     }
     // public static void main(String[] args) {

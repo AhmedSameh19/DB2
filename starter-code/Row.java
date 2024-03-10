@@ -36,18 +36,14 @@ public class Row  implements Serializable{
     }
     public String toString(){
         StringBuilder sb = new StringBuilder();
-        sb.append("{");
 
         for (Map.Entry<String, Object> entry : data.entrySet()) {
-            sb.append(entry.getKey()).append("=").append(entry.getValue()).append(", ");
+            sb.append(entry.getValue()).append(", ");
         }
 
         // Remove the trailing comma and space if there are entries
-        if (!data.isEmpty()) {
-            sb.delete(sb.length() - 2, sb.length());
-        }
-
-        sb.append("}");
+        sb.delete(sb.length()-2, sb.length());
+        
 
         return sb.toString();
     }
