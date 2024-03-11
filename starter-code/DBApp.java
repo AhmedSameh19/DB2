@@ -4,6 +4,7 @@
 import java.io.*;
 import java.util.*;
 
+
 public class DBApp {
 	HashSet <String> tableNames=new HashSet<>();
 
@@ -119,7 +120,7 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 											for (String myKey : htblColNameType.keySet()) {
 												String myValue = htblColNameType.get(myKey);
 												Boolean clusterKey=myKey.equals(strClusteringKeyColumn)?true:false;
-												metaData.add(new String[]{strTableName, myKey, myValue,String.valueOf(clusterKey) , null,null});
+												metaData.add(new String[]{strTableName, myKey, myValue,String.valueOf(clusterKey) ,"null", "null"});
 												
 												
 										}
@@ -157,9 +158,17 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 	public void insertIntoTable(String strTableName, 
 								Hashtable<String,Object>  htblColNameValue) throws DBAppException{
 		String pk = getClusterKey(strTableName);
+		ArrayList<Hashtable<String, String>> dataOfTable = readCsv(strTableName); //type max min pk
+        Hashtable<String, String> htblColNameType = dataOfTable.get(0);
         if (!(htblColNameValue.keySet().contains(pk.trim()))) {
             throw new DBAppException("CANT INSERT WITHOUT PK");
         }
+		for (String str : htblColNameType.keySet()) {
+            if (!htblColNameValue.keySet().contains(str)) {
+                htblColNameValue.put(str, values.NULL);
+            }
+        }
+		verifyRow(strTableName, htblColNameValue);
 		Table t1 = getTable(strTableName);
         Row t = new Row(htblColNameValue, strTableName);
         t1.insertIntoTable(t);
@@ -190,7 +199,7 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 							Hashtable<String,Object> htblColNameValue   )  throws DBAppException{
 								try {
 									verifyPK(strTableName,strClusteringKeyValue);
-
+									verifyRow(strTableName, htblColNameValue);
 									Table t = getTable(strTableName);
 									Row tuple = new Row(htblColNameValue, strTableName);
 									t.updateTable(tuple, strClusteringKeyValue);
@@ -270,12 +279,46 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 		
 
     }
+
+	public static void verifyRow(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
+		ArrayList<Hashtable<String, String>> dataOfTable = readCsv(strTableName); 
+        Hashtable<String, String> htblColNameType = dataOfTable.get(0);
+        String pk = dataOfTable.get(1).get("pk").trim();
+		
+
+        for (String str : htblColNameValue.keySet()) {
+            if (!htblColNameType.keySet().contains(str))
+                throw new DBAppException("THIS COLUMN DOESNT EXIST");
+        }
+        for (String str : htblColNameType.keySet()) {
+            if (htblColNameValue.get(str) == values.NULL && !str.equals(pk))
+                continue;
+            else if (htblColNameValue.get(str)==values.NULL && str.equals(pk))
+                throw new DBAppException("PK CAN'T BE NULL");
+            if (htblColNameType.get(str).toLowerCase().equals("java.lang.string")) {
+                if (!(htblColNameValue.get(str) instanceof String))
+                    throw new DBAppException("Invalid DataTypes");
+               
+            } else if (htblColNameType.get(str).toLowerCase().equals("java.lang.integer")) {
+                if (!(htblColNameValue.get(str) instanceof Integer))
+                    throw new DBAppException("Invalid DataTypes");
+                
+            } else if (htblColNameType.get(str).toLowerCase().equals("java.lang.double")) {
+                if (!(htblColNameValue.get(str) instanceof Double || htblColNameValue.get(str) instanceof Integer))
+                    throw new DBAppException("Invalid DataTypes");
+               
+            }
+            
+
+        }
+    }
+
 	public void verifyPK(String strTableName, String strClusteringKeyValue) throws DBAppException {
         try {
-			
-		
-		Hashtable<String,String> data = readCsv(strTableName); 
-        String pkType = data.get("type");
+
+		ArrayList<Hashtable<String, String>> data = readCsv(strTableName);
+		Hashtable<String, String>  pkdata = data.get(1);
+        String pkType = pkdata.get("type");
         if (pkType.toLowerCase().equals("java.lang.string")) {
             return;
         } else if (pkType.toLowerCase().equals("java.lang.integer")) {
@@ -288,27 +331,30 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 			throw new DBAppException("Wrong PK");
 				}
     }
-	public static Hashtable<String,String> readCsv(String tableName) throws DBAppException {
-        Hashtable<String,String> primaryKeyRows = new Hashtable<>();
+	public static ArrayList<Hashtable<String, String>> readCsv(String tableName) throws DBAppException {
+		Hashtable<String, String> htblColNameType = new Hashtable<>();
+        Hashtable<String, String> pk = new Hashtable<>();
 		String csvFile="metadata.csv";
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             String line;
             String cvsSplitBy = ",";
-
             while ((line = br.readLine()) != null) {
                 String[] data = line.split(cvsSplitBy);
-
+				htblColNameType.put(data[1].trim(),data[2]);
                 if (data[3].trim().equalsIgnoreCase("true") && data[0].trim().compareTo(tableName)==0  ) {
-                    primaryKeyRows.put("pk",data[1]);  
-					primaryKeyRows.put("type",data[2]);
+                    pk.put("pk",data[1]);  
+					pk.put("type",data[2]);
 
                 }
             }
+			ArrayList<Hashtable<String, String>> res = new ArrayList<>();
+			res.add(htblColNameType);
+			res.add(pk);
+			return res;
         } catch (IOException e) {
 			throw new DBAppException(e.getMessage());
 		        }
 
-        return primaryKeyRows;
     }
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
@@ -330,7 +376,7 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 
 	public static void main( String[] args ) throws DBAppException{
 
-	
+
 		DBApp	dbApp = new DBApp( );
 			String strTableName = "Student";
 					try{
@@ -350,35 +396,30 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 			htblColNameValue.put("name", "Ahmed Noor");
 			htblColNameValue.put("gpa", Double.valueOf(0.95));
 			dbApp.insertIntoTable(strTableName, htblColNameValue);
-			System.out.println(dbApp);
 
 			htblColNameValue.clear( );
 			htblColNameValue.put("id", Integer.valueOf( 453455 ));
 			htblColNameValue.put("name", new String("Ahmed tarek" ) );
 			htblColNameValue.put("gpa", Double.valueOf( 0.95 ) );
 			dbApp.insertIntoTable( strTableName , htblColNameValue );
-			System.out.println(dbApp);
 
 			htblColNameValue.clear( );
 			htblColNameValue.put("id", Integer.valueOf( 453452325 ));
 			htblColNameValue.put("name", new String("Ahmed khaled" ) );
 			htblColNameValue.put("gpa", Double.valueOf( 1 ) );
 			dbApp.insertIntoTable( strTableName , htblColNameValue );
-			System.out.println(dbApp);
 
 			htblColNameValue.clear( );
 			htblColNameValue.put("id", Integer.valueOf( 23498 ));
 			htblColNameValue.put("name", new String("John Noor" ) );
 			htblColNameValue.put("gpa", Double.valueOf( 1.5 ) );
 			dbApp.insertIntoTable( strTableName , htblColNameValue );
-			System.out.println(dbApp);
 
 			htblColNameValue.clear( );
 			htblColNameValue.put("id", Integer.valueOf( 23499 ));
 			htblColNameValue.put("name", new String("Zaky Noor" ) );
 			htblColNameValue.put("gpa", Double.valueOf( 0.88 ) );
 			dbApp.insertIntoTable( strTableName , htblColNameValue );
-			System.out.println(dbApp);
 
 			htblColNameValue.clear( );
 			htblColNameValue.put("name", new String("Ahmed Sakr" ) );

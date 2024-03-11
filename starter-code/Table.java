@@ -31,7 +31,6 @@ import java.util.*;
             }
             createPage();
             Page p2 = getPageByNumber(this.pageNums.get(this.pageNums.size()-1));
-            System.out.println(p2.getPageNumber());
             p2.getTuples().add(record);
             savePage(p2);
             return;
@@ -232,7 +231,6 @@ import java.util.*;
         sb.append(String.format("-----------------------%s------------------------- \n",this.name)); 
             for(Integer i : this.pageNums){
             try {
-                System.out.println(i);
                 sb.append(getPageByNumber(i)+"\n");
             } catch (Exception e) {
                 try {
