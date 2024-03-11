@@ -1,5 +1,5 @@
 import java.io.*;
-
+import java.text.SimpleDateFormat;
 import java.util.*;
 
     public class Table implements Serializable {
@@ -23,14 +23,15 @@ import java.util.*;
         Page p = getPageByTuple(record);
 
         if(p==null){
-            int num =this.pageNums.get(this.pageNums.size()-1);
-            if(getPageByNumber(num).getTuples().size()<Table.PAGE_SIZE){
-                getPageByNumber(num).getTuples().add(record);
-                savePage(getPageByNumber(num));
+            Page p3 = getPageByNumber(this.pageNums.get(this.pageNums.size()-1));
+            if(p3.size()<Table.PAGE_SIZE){
+                p3.getTuples().add(record);
+                savePage(p3);
                 return;
             }
             createPage();
             Page p2 = getPageByNumber(this.pageNums.get(this.pageNums.size()-1));
+            System.out.println(p2.getPageNumber());
             p2.getTuples().add(record);
             savePage(p2);
             return;
@@ -40,7 +41,7 @@ import java.util.*;
                 for (int i = 0 ; i < pageNums.size() ; i++){
                     int pgNum = pageNums.get(i);
                     if (pgNum == p.getPageNumber() && i!=0){
-                        Page prevPage = getPageByNumber(i-1);
+                        Page prevPage = getPageByNumber(pgNum-1);
                         if (prevPage.getTuples().size() < Table.PAGE_SIZE){
                             prevPage.getTuples().add(record);
                             savePage(prevPage);
@@ -116,7 +117,7 @@ import java.util.*;
         for (int i = 0 ; i < this.pageNums.size() ; i++){
             int pgNum = pageNums.get(i);
             Page p = getPageByNumber(pgNum);
-            if (p.getTuples().get(p.getTuples().size() - 1).compareTo(t) >= 0) {
+            if (p.getTuples().get(p.getTuples().size() - 1).compareTo(t) > 0) {
 //                if (p.getTuples().get(0).compareTo(t) > 0 && i != 0){
 //                    Page prev = getPageByNumber(pageNums.get(i-1));
 //                    if (prev.getTuples().size() < PAGE_SIZE)
@@ -166,13 +167,72 @@ import java.util.*;
             throw new DBAppException(e);
         }
     }
-    
+    public Page updateme(String strClusteringKeyValue) throws DBAppException{
+        String pk = DBApp.getClusterKey(this.name).trim();
+        for(int i = 0 ; i < pageNums.size() ; i++){
+            Page pg = getPageByNumber(pageNums.get(i));
+            Object val0 = pg.getTuples().get(0).getData().get(pk);
+
+            Object val1 = pg.getTuples().get(pg.getTuples().size() - 1).getData().get(pk);
+            if(comparePKs(strClusteringKeyValue,val0)>=0 && comparePKs(strClusteringKeyValue,val1)<=0) {
+                return pg;
+            }
+        }
+        return null;
+    }
+    public void updateTable(Row record,String strClusteringKeyValue) throws DBAppException {
+        String pk = DBApp.getClusterKey(this.name).trim();
+        Page pg=updateme(strClusteringKeyValue);
+
+        if (pk == null) {
+            throw new DBAppException("PK DOESNT EXIST");
+        }
+        int low = 0, high = pg.getTuples().size() - 1, mid = (low + high) / 2;
+        while (low <= high) {
+            mid = (low + high) / 2;
+            Row tempTup = pg.getTuples().get(mid);
+            Object midVal = tempTup.getValue(pk);
+            int com= comparePKs(strClusteringKeyValue,midVal);
+            if (com== 0) {
+                for (String str : record.getData().keySet()) {
+                    tempTup.getData().replace(str, record.getData().get(str));
+                }
+                savePage(pg);
+                return;
+            }
+            if (com < 0)
+                high = mid - 1;
+            else
+                low = mid + 1;
+        }
+        throw new DBAppException("PK DOESNT EXIST");
+
+    }
+    public static int comparePKs(String stringPK , Object realPK) throws DBAppException {
+        if (realPK instanceof String){
+            return stringPK.compareTo((String) realPK);
+        }
+        else if (realPK instanceof Integer){
+            Integer sPK = Integer.parseInt(stringPK);
+            Integer rPK = (Integer) realPK;
+            return sPK.compareTo(rPK);
+        }
+        else if (realPK instanceof Double){
+            Double sPK = Double.parseDouble(stringPK);
+            Double rPK = (Double) realPK;
+            return sPK.compareTo(rPK);
+        }
+       
+        throw new DBAppException("WRONG TYPE FOR PRIMARY KEY!");
+    }
+
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.name+"\n");
         sb.append(String.format("-----------------------%s------------------------- \n",this.name)); 
-               for(Integer i : this.pageNums){
+            for(Integer i : this.pageNums){
             try {
+                System.out.println(i);
                 sb.append(getPageByNumber(i)+"\n");
             } catch (Exception e) {
                 try {
@@ -184,22 +244,22 @@ import java.util.*;
         }
         return sb.toString();
     }
-    // public static void main(String[] args) {
-    //     Table t =new Table("aa");
-    //     Hashtable <String, Object> x=new Hashtable<>();
-    //     x.put("id", new Integer(0));
-    //     x.put("name", new String("Ahmed"));
-    //     x.put("gpa", new Double(5.9));
-    //     Row  r1 = new Row(x,"aa");
-    //     try {
-    //         t.createPage();
-    //         t.getPageByNumber(1).insertTuple(r1);
-    //         System.out.println(t.getPageByNumber(1).getTuples());
-    //     } catch (DBAppException e) {
-    //         // TODO Auto-generated catch block
-    //         e.printStackTrace();
-    //     }
-    // }
+    public static void main(String[] args) {
+        Table t =new Table("aa");
+        Hashtable <String, Object> x=new Hashtable<>();
+        x.put("id", new Integer(0));
+        x.put("name", new String("Ahmed"));
+        x.put("gpa", new Double(5.9));
+        Row  r1 = new Row(x,"aa");
+        try {
+            // t.createPage();
+            // t.getPageByNumber(1).insertTuple(r1);
+            System.out.println(comparePKs("1222", new String("122")));
+        } catch (DBAppException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
    
     
 }
