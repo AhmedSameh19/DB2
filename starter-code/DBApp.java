@@ -285,7 +285,7 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
         } 
 	}
 		catch (Exception e) {
-			throw new DBAppException(e.getMessage());
+			throw new DBAppException("Wrong PK");
 				}
     }
 	public static Hashtable<String,String> readCsv(String tableName) throws DBAppException {
@@ -296,10 +296,8 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
             String cvsSplitBy = ",";
 
             while ((line = br.readLine()) != null) {
-                // Split the line by comma
                 String[] data = line.split(cvsSplitBy);
 
-                // Check if the row has the is_primaryKey as true
                 if (data[3].trim().equalsIgnoreCase("true") && data[0].trim().compareTo(tableName)==0  ) {
                     primaryKeyRows.put("pk",data[1]);  
 					primaryKeyRows.put("type",data[2]);
@@ -307,7 +305,8 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
                 }
             }
         } catch (IOException e) {
-			throw new DBAppException(e.getMessage());        }
+			throw new DBAppException(e.getMessage());
+		        }
 
         return primaryKeyRows;
     }
