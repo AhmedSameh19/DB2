@@ -189,6 +189,8 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 							String strClusteringKeyValue,
 							Hashtable<String,Object> htblColNameValue   )  throws DBAppException{
 								try {
+									verifyPK(strTableName,strClusteringKeyValue);
+
 									Table t = getTable(strTableName);
 									Row tuple = new Row(htblColNameValue, strTableName);
 									t.updateTable(tuple, strClusteringKeyValue);
@@ -268,6 +270,47 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 		
 
     }
+	public void verifyPK(String strTableName, String strClusteringKeyValue) throws DBAppException {
+        try {
+			
+		
+		Hashtable<String,String> data = readCsv(strTableName); 
+        String pkType = data.get("type");
+        if (pkType.toLowerCase().equals("java.lang.string")) {
+            return;
+        } else if (pkType.toLowerCase().equals("java.lang.integer")) {
+            return;
+        } else if (pkType.toLowerCase().equals("java.lang.double")) {
+           return;
+        } 
+	}
+		catch (Exception e) {
+			throw new DBAppException(e.getMessage());
+				}
+    }
+	public static Hashtable<String,String> readCsv(String tableName) throws DBAppException {
+        Hashtable<String,String> primaryKeyRows = new Hashtable<>();
+		String csvFile="metadata.csv";
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+            String line;
+            String cvsSplitBy = ",";
+
+            while ((line = br.readLine()) != null) {
+                // Split the line by comma
+                String[] data = line.split(cvsSplitBy);
+
+                // Check if the row has the is_primaryKey as true
+                if (data[3].trim().equalsIgnoreCase("true") && data[0].trim().compareTo(tableName)==0  ) {
+                    primaryKeyRows.put("pk",data[1]);  
+					primaryKeyRows.put("type",data[2]);
+
+                }
+            }
+        } catch (IOException e) {
+			throw new DBAppException(e.getMessage());        }
+
+        return primaryKeyRows;
+    }
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
         for(String i : tableNames){
@@ -291,7 +334,7 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 	
 		DBApp	dbApp = new DBApp( );
 			String strTableName = "Student";
-			try{
+					try{
 				Hashtable <String,String> htblColNameType = new Hashtable<>( );
 				htblColNameType.put("id", "java.lang.Integer");
 				htblColNameType.put("name", "java.lang.String");
