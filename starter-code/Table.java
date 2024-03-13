@@ -1,5 +1,4 @@
 import java.io.*;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
     public class Table implements Serializable {
@@ -183,8 +182,8 @@ import java.util.*;
         String pk = DBApp.getClusterKey(this.name).trim();
         Page pg=updateme(strClusteringKeyValue);
 
-        if (pk == null) {
-            throw new DBAppException("PK DOESNT EXIST");
+        if (pg == null || pk== null) {
+            throw new DBAppException("DOESNT EXIST");
         }
         int low = 0, high = pg.getTuples().size() - 1, mid = (low + high) / 2;
         while (low <= high) {
@@ -224,7 +223,154 @@ import java.util.*;
        
         throw new DBAppException("WRONG TYPE FOR PRIMARY KEY!");
     }
+    public Vector<Row> searchTable(String _strColumnName, String _strOperator, Object _objValue) throws DBAppException {
+        Vector<Row> res = new Vector<>();
+        String op = identifyOperator(_strOperator);
+        Object val;
+        if (op == null)
+            throw new DBAppException("Wrong operator");
+    
+        if (_objValue instanceof String) {
+            val = (String) _objValue;
+        } else if (_objValue instanceof Double) {
+            val = (Double) _objValue;
+        } else if (_objValue instanceof Integer) {
+            val = (Integer) _objValue;
+        } else {
+            throw new DBAppException("Unsupported data type");
+        }
+    
+        for (int i = 0; i < pageNums.size(); i++) {
+            Page p = getPageByNumber(i+1);
+            for (int j = 0; j < p.size(); j++) {
+                Row r = p.getTuples().get(j);
+                switch (_strOperator) {
+                    case "=":
+                        if (r.getValue(_strColumnName).equals(val)) {
+                            res.add(r);
+                        }
+                        break;
+                    case ">=":
+                        if ((Double)r.getValue(_strColumnName) >= (Double)val) {
+                            res.add(r);
+                        }
+                        break;
+                    case ">":
+                        if ((Double)r.getValue(_strColumnName) > (Double)val) {
+                            res.add(r);
+                        }
+                        break;
+                    case "<=":
+                        if ((Double)r.getValue(_strColumnName) <= (Double)val) {
+                            res.add(r);
+                        }
+                        break;
+                    case "<":
+                        if ((Double)r.getValue(_strColumnName) < (Double)val) {
+                            res.add(r);
+                        }
+                        break;
+                    case "!=":
+                        if (!r.getValue(_strColumnName).equals(val)) {
+                            res.add(r);
+                        }
+                        break;
+                    default:
+                        throw new DBAppException("Unsupported operator");
+                }
+            }
+        }
+        return res;
+    }
+    
+    public String identifyOperator(String expression) {
+        String[] operators = {">", ">=", "<", "<=", "!=", "="};
+        for (String op : operators) {
+            if (expression.contains(op)) {
+                return op;
+            }
+        }
+        return null;
+    }
+    public void deleteRecord(int index, Page p , boolean flag) throws DBAppException {
 
+        p.getTuples().remove(index);
+        if (p.getTuples().size() == 0){
+            String path = "Pages/" + this.name + "" + p.getPageNumber() + ".class";
+            File file = new File(path);
+            System.out.println(file.delete());
+            flag = false;
+            for (int j = 0 ; j < pageNums.size() ; j++) {
+                int num = pageNums.get(j);
+                if (num==p.getPageNumber()) {
+                    this.pageNums.remove(j);
+                    break;
+                }
+            }
+        }
+        else {
+            savePage(p);
+        }
+    }
+    public void deleteRecord(int index, Page p) throws DBAppException {
+        p.getTuples().remove(index);
+        if (p.getTuples().size() == 0){
+            String path = "Pages/" + this.name + "" + p.getPageNumber() + ".class";
+            File file = new File(path);
+            System.out.println(file.delete());
+            for (int j = 0 ; j < pageNums.size() ; j++) {
+                int num = pageNums.get(j);
+                if (num==p.getPageNumber()) {
+                    this.pageNums.remove(j);
+                    break;
+                }
+            }
+        }
+        else {
+            savePage(p);
+        }
+    }    
+    public int findRec(Row record,String strClusteringKeyValue) throws DBAppException {
+        
+        String pk = DBApp.getClusterKey(this.name).trim();
+        Page pg=findPage(strClusteringKeyValue);
+
+        if (pk == null) {
+            throw new DBAppException("PK DOESNT EXIST");
+        }
+        int low = 0, high = pg.getTuples().size() - 1, mid = (low + high) / 2;
+        while (low <= high) {
+            mid = (low + high) / 2;
+            Row tempTup = pg.getTuples().get(mid);
+            Object midVal = tempTup.getValue(pk);
+            int com= comparePKs(strClusteringKeyValue,midVal);
+            if (com== 0) 
+                return mid;
+            if (com < 0)
+                high = mid - 1;
+            else
+                low = mid + 1;
+        
+
+    }
+    return -1;
+
+}
+
+    public Page findPage (String strClusteringKeyValue) throws DBAppException{
+        String pk = DBApp.getClusterKey(this.name).trim();
+        for(int i = 0 ; i < pageNums.size() ; i++){
+            Page pg = getPageByNumber(pageNums.get(i));
+            Object val0 = pg.getTuples().get(0).getData().get(pk);
+
+            Object val1 = pg.getTuples().get(pg.getTuples().size() - 1).getData().get(pk);
+            if(comparePKs(strClusteringKeyValue,val0)>=0 && comparePKs(strClusteringKeyValue,val1)<=0) {
+                return pg;
+            }
+        }
+        return null;
+
+    }
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.name+"\n");
@@ -242,22 +388,23 @@ import java.util.*;
         }
         return sb.toString();
     }
-    public static void main(String[] args) {
-        Table t =new Table("aa");
-        Hashtable <String, Object> x=new Hashtable<>();
-        x.put("id", new Integer(0));
-        x.put("name", new String("Ahmed"));
-        x.put("gpa", new Double(5.9));
-        Row  r1 = new Row(x,"aa");
-        try {
-            // t.createPage();
-            // t.getPageByNumber(1).insertTuple(r1);
-            System.out.println(comparePKs("1222", new String("122")));
-        } catch (DBAppException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
+     public static void main(String[] args) throws DBAppException {
+    //     Table t =new Table("aa");
+    //     Hashtable <String, Object> x=new Hashtable<>();
+    //     x.put("id", new Integer(0));
+    //     x.put("name", new String("Ahmed"));
+    //     x.put("gpa", new Double(5.9));
+    //     Row  r1 = new Row(x,"aa");
+    // /     try {
+    //         // t.createPage();
+    //         // t.getPageByNumber(1).insertTuple(r1);
+              System.out.println(comparePKs("1222", new String("1222")));
+            
+    //     } catch (DBAppException e) {
+    //         // TODO Auto-generated catch block
+    //         e.printStackTrace();
+    //     }
+    // }
    
     
-}
+}}
