@@ -5,9 +5,26 @@ import java.util.*;
 public class Page implements Serializable {
     private Vector<Row> row;
     private int pageNumber;
+    public String getName() {
+        return name;
+    }
 
+
+
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    String name;
     public void insertTuple(Row tuple) {
         row.add(tuple);
+    }
+
+
+
+
+    public void setPageNumber(int pageNumber) {
+        this.pageNumber = pageNumber;
     }
 
 

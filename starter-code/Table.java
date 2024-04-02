@@ -1,6 +1,6 @@
 import java.io.*;
 import java.util.*;
-
+import java.time.*;
     public class Table implements Serializable {
     static int PAGE_SIZE;
     String name;
@@ -16,6 +16,7 @@ import java.util.*;
             createPage();
             Page p = getPageByNumber(this.pageNums.get(0));
             p.getTuples().add(record);
+            p.setName("Pages/" + this.name + "" + p.getPageNumber() + ".class");
             savePage(p);
             return;
         }
@@ -25,12 +26,16 @@ import java.util.*;
             Page p3 = getPageByNumber(this.pageNums.get(this.pageNums.size()-1));
             if(p3.size()<Table.PAGE_SIZE){
                 p3.getTuples().add(record);
+                p3.setName("Pages/" + this.name + "" + p3.getPageNumber() + ".class");
+
                 savePage(p3);
                 return;
             }
             createPage();
             Page p2 = getPageByNumber(this.pageNums.get(this.pageNums.size()-1));
             p2.getTuples().add(record);
+            p2.setName("Pages/" + this.name + "" + p2.getPageNumber() + ".class");
+
             savePage(p2);
             return;
             }
@@ -42,6 +47,8 @@ import java.util.*;
                         Page prevPage = getPageByNumber(pgNum-1);
                         if (prevPage.getTuples().size() < Table.PAGE_SIZE){
                             prevPage.getTuples().add(record);
+                            prevPage.setName("Pages/" + this.name + "" + prevPage.getPageNumber() + ".class");
+
                             savePage(prevPage);
                             return;
                         }
@@ -58,6 +65,8 @@ import java.util.*;
         if (tuples.isEmpty()){
             tuples.add(record);
             p.setRow(tuples);
+            p.setName("Pages/" + this.name + "" + p.getPageNumber() + ".class");
+
             savePage(p);
             return;
         }
@@ -98,6 +107,8 @@ import java.util.*;
             }
             tuples.set(mid , record);
             p.setRow(tuples);
+            p.setName("Pages/" + this.name + "" + p.getPageNumber() + ".class");
+
             savePage(p);
             return;
         }
@@ -108,6 +119,8 @@ import java.util.*;
         tuples.set(mid , record);
         tuples.add(last);
         p.setRow(tuples);
+        p.setName("Pages/" + this.name + "" + p.getPageNumber() + ".class");
+
         savePage(p);  
       }
 
@@ -130,16 +143,19 @@ import java.util.*;
         if (pageNums.size() == 0){
             Page p = new Page(1);
             this.pageNums.add(1);
+            p.setName("Pages/" + this.name + "" + p.getPageNumber() + ".class");
+
             savePage(p);
             return;
         }
         Page p = new Page(pageNums.get(pageNums.size() - 1)+1);
         this.pageNums.add(p.getPageNumber());
+        p.setName("Pages/" + this.name + "" + p.getPageNumber() + ".class");
+
         savePage(p);
     }
     public void savePage(Page p) throws DBAppException {
-        String filePath = "Pages/" + this.name + "" + p.getPageNumber() + ".class";
-        
+        String filePath = p.getName();
         try (FileOutputStream fileOut = new FileOutputStream(filePath);
             ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
             out.writeObject(p);
@@ -195,6 +211,8 @@ import java.util.*;
                 for (String str : record.getData().keySet()) {
                     tempTup.getData().replace(str, record.getData().get(str));
                 }
+                pg.setName("Pages/" + this.name + "" + pg.getPageNumber() + ".class");
+
                 savePage(pg);
                 return;
             }
@@ -239,7 +257,6 @@ import java.util.*;
         } else {
             throw new DBAppException("Unsupported data type");
         }
-    
         for (int i = 0; i < pageNums.size(); i++) {
             Page p = getPageByNumber(i+1);
             for (int j = 0; j < p.size(); j++) {
@@ -292,60 +309,61 @@ import java.util.*;
         }
         return null;
     }
-    public void deleteRecord(int index, Page p , boolean flag) throws DBAppException {
-
-        p.getTuples().remove(index);
-        if (p.getTuples().size() == 0){
-            String path = "Pages/" + this.name + "" + p.getPageNumber() + ".class";
+    
+    public void updatePagesNumbers() throws DBAppException {
+        for (int i = 0; i < pageNums.size(); i++) {
+            int pageNumber = pageNums.get(i);
+            Page page = getPageByNumber(pageNumber);
+            if (page == null) {
+                throw new DBAppException("Page with number " + pageNumber + " not found.");
+            }
+            String newPath = "Pages/" + this.name + "" + (pageNumber - 1) + ".class";
+            page.setName(newPath);
+            page.setPageNumber(pageNumber - 1);
+            pageNums.set(i, pageNumber - 1);
+            savePage(page);
+            String path = "Pages/" + this.name + "" + pageNumber + ".class";
             File file = new File(path);
-            System.out.println(file.delete());
-            flag = false;
-            for (int j = 0 ; j < pageNums.size() ; j++) {
-                int num = pageNums.get(j);
-                if (num==p.getPageNumber()) {
-                    this.pageNums.remove(j);
-                    break;
-                }
+            if (!file.delete()) {
+                throw new DBAppException("Failed to delete file: " + path);
             }
         }
-        else {
+    }
+    
+    public void deleteRow(int index, Page p) throws DBAppException {
+        p.getTuples().remove(index);
+        if (p.getTuples().isEmpty()) {
+            String path = "Pages/" + this.name + "" + p.getPageNumber() + ".class";
+            File file = new File(path);
+            if (!file.delete()) {
+                throw new DBAppException("Failed to delete file: " + path);
+            }
+            pageNums.remove(Integer.valueOf(p.getPageNumber())); 
+            updatePagesNumbers();
+        } else {
+            p.setName("Pages/" + this.name + "" + p.getPageNumber() + ".class");
             savePage(p);
         }
     }
-    public void deleteRecord(int index, Page p) throws DBAppException {
-        p.getTuples().remove(index);
-        if (p.getTuples().size() == 0){
-            String path = "Pages/" + this.name + "" + p.getPageNumber() + ".class";
-            File file = new File(path);
-            System.out.println(file.delete());
-            for (int j = 0 ; j < pageNums.size() ; j++) {
-                int num = pageNums.get(j);
-                if (num==p.getPageNumber()) {
-                    this.pageNums.remove(j);
-                    break;
-                }
-            }
-        }
-        else {
-            savePage(p);
-        }
-    }    
-    public int findRec(Row record,String strClusteringKeyValue) throws DBAppException {
+    
+    public void deleteRecord(Hashtable<String,Object> htblColNameValue) throws DBAppException {
         
         String pk = DBApp.getClusterKey(this.name).trim();
-        Page pg=findPage(strClusteringKeyValue);
-
-        if (pk == null) {
-            throw new DBAppException("PK DOESNT EXIST");
+        String strClusteringKeyValue = htblColNameValue.get(pk).toString();
+        Page pg=findPage(strClusteringKeyValue.trim());
+        if (pk == null || pg==null) {
+            throw new DBAppException("Check your inputs!!!");
         }
         int low = 0, high = pg.getTuples().size() - 1, mid = (low + high) / 2;
         while (low <= high) {
             mid = (low + high) / 2;
             Row tempTup = pg.getTuples().get(mid);
             Object midVal = tempTup.getValue(pk);
-            int com= comparePKs(strClusteringKeyValue,midVal);
-            if (com== 0) 
-                return mid;
+            int com= comparePKs(strClusteringKeyValue.trim(),midVal);
+            if (com== 0) {
+                deleteRow(mid,pg);
+                return;
+            }
             if (com < 0)
                 high = mid - 1;
             else
@@ -353,7 +371,7 @@ import java.util.*;
         
 
     }
-    return -1;
+    throw new DBAppException("This Tuple isn't avaliable in this table");
 
 }
 
@@ -398,13 +416,38 @@ import java.util.*;
     // /     try {
     //         // t.createPage();
     //         // t.getPageByNumber(1).insertTuple(r1);
-              System.out.println(comparePKs("1222", new String("1222")));
+            //   System.out.println(comparePKs("1222", new String("1222")));
+            // String filePath = "pages.ser";
+        
+            // // Create a File object with the specified file path
+            // File file = new File(filePath);
             
+            // // Check if the file name ends with ".ser"
+            // if (file.getName().endsWith(".ser")) {
+            //     System.out.println("The file has the .ser extension.");
+            // } else {
+            //     System.out.println("The file does not have the .ser extension.");
+            // }
+
     //     } catch (DBAppException e) {
     //         // TODO Auto-generated catch block
     //         e.printStackTrace();
     //     }
     // }
+    try {
+        Page p = null;
+        FileInputStream fileIn = new FileInputStream("Pages/" + "Student" + "" + 2 + ".class");
+        ObjectInputStream in = new ObjectInputStream(fileIn);
+        p = (Page) in.readObject();
+        in.close();
+        fileIn.close();
+       System.out.println(p);
+    }
+    catch (Exception e){
+        throw new DBAppException(e);
+    }
    
-    
+    // String path = "Pages/" + "Student" + "" + 3 + ".class";
+    // File file = new File(path);
+    // file.delete();
 }}

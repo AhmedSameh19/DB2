@@ -109,7 +109,8 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 										if(!(value.equals("java.lang.double")||value.equals("java.lang.String")||value.equals("java.lang.Integer"))){
 											throw new DBAppException("Data type mismatch!");
 	
-										}}
+										}
+									}
 										Table t = new Table(strTableName);
 	
 										try{
@@ -154,22 +155,29 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 	// htblColNameValue must include a value for the primary key
 	public void insertIntoTable(String strTableName, 
 								Hashtable<String,Object>  htblColNameValue) throws DBAppException{
-		String pk = getClusterKey(strTableName);
-		ArrayList<Hashtable<String, String>> dataOfTable = readCsv(strTableName); //type max min pk
-        Hashtable<String, String> htblColNameType = dataOfTable.get(0);
-        if (!(htblColNameValue.keySet().contains(pk.trim()))) {
-            throw new DBAppException("CANT INSERT WITHOUT PK");
-        }
-		for (String str : htblColNameType.keySet()) {
-            if (!htblColNameValue.keySet().contains(str)) {
-                htblColNameValue.put(str, values.NULL);
-            }
-        }
-		verifyRow(strTableName, htblColNameValue);
-		Table t1 = getTable(strTableName);
-        Row t = new Row(htblColNameValue, strTableName);
-        t1.insertIntoTable(t);
-        saveTable(t1);
+		try{
+			
+			String pk = getClusterKey(strTableName);
+			ArrayList<Hashtable<String, String>> dataOfTable = readCsv(strTableName); //type max min pk
+			Hashtable<String, String> htblColNameType = dataOfTable.get(0);
+			if (!(htblColNameValue.keySet().contains(pk.trim()))) {
+				throw new DBAppException("CANT INSERT WITHOUT PK");
+			}
+			for (String str : htblColNameType.keySet()) {
+				if (!htblColNameValue.keySet().contains(str)) {
+					htblColNameValue.put(str, values.NULL);
+				}
+			}
+			verifyRow(strTableName, htblColNameValue);
+			Table t1 = getTable(strTableName);
+			Row t = new Row(htblColNameValue, strTableName);
+			t1.insertIntoTable(t);
+			saveTable(t1);
+		}
+		catch(DBAppException e){
+			throw new DBAppException("Error inserting record: " + e.getMessage());
+
+		}
 									
 	}
 
@@ -183,9 +191,14 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
             in.close();
             fileIn.close();
             return t;
-        } catch (Exception e) {
-            throw new DBAppException(e);
-        }	}
+        } catch (java.io.FileNotFoundException e) {
+            throw new DBAppException("File for table '" + strTableName + "' not found.");
+        } catch (java.io.IOException e) {
+            throw new DBAppException("Error reading file for table '" + strTableName + "'.");
+        } catch (ClassNotFoundException e) {
+            throw new DBAppException("Class definition for Table not found during deserialization.");
+        }
+	}
 
 	// following method updates one row only
 	// htblColNameValue holds the key and new value 
@@ -202,7 +215,7 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 									t.updateTable(tuple, strClusteringKeyValue);
 									saveTable(t);
 								} catch (Exception e) {
-									throw new DBAppException(e);
+									throw new DBAppException("Error updating record: " + e.getMessage());
 								}
 	}
 
@@ -217,16 +230,18 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 									try {
 										verifyRow(strTableName, htblColNameValue);
 										Table t = getTable(strTableName);
-										//t.deleteRecord(htblColNameValue);
+										t.deleteRecord(htblColNameValue);
 										saveTable(t);
-									} catch (Exception e) {
-										throw new DBAppException(e);
-									}	}
+									} catch (DBAppException e) {
+										throw new DBAppException("Error deleting record: " + e.getMessage());
+									}	
+								}
 
 
 	public Iterator<Row> selectFromTable(SQLTerm[] arrSQLTerms, 
 									String[]  strarrOperators) throws DBAppException, IOException{
-		String _strTableName,_strColumnName, _strOperator;
+										try {
+											String _strTableName,_strColumnName, _strOperator;
 		Object _objValue;
 		Vector<Vector<Row>> res=new Vector<>();
 		String op=strarrOperators[0];
@@ -248,6 +263,11 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 		}	
 
 		return SQLTerm.searchIterator(res,op,myKeys,name);
+										} catch (DBAppException e) {
+											throw new DBAppException("Error in selecting this SQL query: " + e.getMessage());
+
+										}
+		
 						
 									
 	}
@@ -263,7 +283,7 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
             t = null;
             System.gc();
         } catch (IOException e) {
-            throw new DBAppException(e);
+            throw new DBAppException("Error serializing table '" + t.name + "'.");
         }
     }
     public static  String getClusterKey(String strTableName) throws DBAppException {
@@ -291,7 +311,7 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 			
         } 
 		catch (Exception e) {
-            throw new DBAppException(e);
+            throw new DBAppException("Error while getting the cluster key: "+e.getMessage());
         }
 		finally {
 			try {
@@ -353,7 +373,7 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
         } 
 	}
 		catch (Exception e) {
-			throw new DBAppException("Wrong PK");
+			throw new DBAppException("Wrong PK: " + e.getMessage());
 				}
     }
 	public static ArrayList<Hashtable<String, String>> readCsv(String tableName) throws DBAppException {
@@ -377,26 +397,26 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 			res.add(pk);
 			return res;
         } catch (IOException e) {
-			throw new DBAppException(e.getMessage());
+			throw new DBAppException("Error reading the CSV file: "+e.getMessage());
 		        }
 
     }
-	public String toString(){
+	public String toString() {
 		StringBuilder sb = new StringBuilder();
-        for(String i : tableNames){
-            try {
-                sb.append(getTable(i)+"\n");
-            } catch (Exception e) {
-                try {
-                    throw new DBAppException(e);
-                } catch (DBAppException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        }
-        return sb.toString();
-    
-   	}
+		for (String tableName : tableNames) {
+			try {
+				sb.append(getTable(tableName)).append("\n");
+			} catch (DBAppException e) {
+				try {
+					throw new DBAppException("Error getting table name: " + e.getMessage());
+				} catch (DBAppException e1) {
+					e1.printStackTrace();
+				}
+			}
+		}
+		return sb.toString();
+	}
+	
 
 
 	public static void main( String[] args ) throws DBAppException, IOException{
@@ -404,7 +424,7 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 
 		DBApp	dbApp = new DBApp( );
 			String strTableName = "Student";
-					try{
+			try{
 				Hashtable <String,String> htblColNameType = new Hashtable<>( );
 				htblColNameType.put("id", "java.lang.Integer");
 				htblColNameType.put("name", "java.lang.String");
@@ -414,9 +434,9 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 			catch( Exception ex ){
 				System.out.println(ex.toString());
 			}
-			//dbApp.createIndex( strTableName, "gpa", "gpaIndex" );
+		// 	//dbApp.createIndex( strTableName, "gpa", "gpaIndex" );
 			try{
-			 Hashtable<String, Object> htblColNameValue = new Hashtable<>();
+			  Hashtable<String, Object> htblColNameValue = new Hashtable<>();
 			 htblColNameValue.put("id", Integer.valueOf(2343432));
 			 htblColNameValue.put("name", "Ahmed Noor");
 			 htblColNameValue.put("gpa", Double.valueOf(0.95));
@@ -450,19 +470,48 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 			 htblColNameValue.clear( );
 			 htblColNameValue.put("name", new String("John Noor" ) );
 			 htblColNameValue.put("gpa", Double.valueOf( 1.9 ) );
+
 			 dbApp.updateTable(strTableName,"23498", htblColNameValue );
 			 System.out.println(dbApp);
-			SQLTerm[] arrSQLTerms = new SQLTerm[2];
 
-			arrSQLTerms[0] = new SQLTerm("Student", "name", "=", "John Noor");
-			arrSQLTerms[1] = new SQLTerm("Student", "gpa", "=", new Double(1.9));
+			 htblColNameValue.clear( );
+			 htblColNameValue.put("id", Integer.valueOf( 23499 ));
+			 htblColNameValue.put("name", new String("John Noor" ) );
+			 htblColNameValue.put("gpa", Double.valueOf( 0.88 ) );
+			 
+			 
+			 dbApp.deleteFromTable("Student",htblColNameValue);
+			//  System.out.println(dbApp);
+			 htblColNameValue.clear( );
+			 htblColNameValue.put("id", Integer.valueOf( 23498 ));
+			 htblColNameValue.put("name", new String("John Noor" ) );
+			 htblColNameValue.put("gpa", Double.valueOf( 1.0 ) );
 
- 
-			String[]strarrOperators = new String[1]; 
-			strarrOperators[0] = "or"; 
-			// select * from Student where name = “John Noor” or gpa = 1.5; 
-			Iterator <Row> resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators);
-			while (resultSet.hasNext()) {
+			dbApp.deleteFromTable("Student",htblColNameValue);
+			System.out.println(dbApp);
+
+			 SQLTerm[] arrSQLTerms;
+			 arrSQLTerms = new SQLTerm[2];
+			 
+			 // Initialize elements before accessing fields
+			 arrSQLTerms[0] = new SQLTerm();
+			 arrSQLTerms[0]._strTableName = "Student";
+			 arrSQLTerms[0]._strColumnName = "name";
+			 arrSQLTerms[0]._strOperator = "=";
+			 arrSQLTerms[0]._objValue = "Ahmed Noor";
+			 
+			 arrSQLTerms[1] = new SQLTerm();
+			 arrSQLTerms[1]._strTableName = "Student";
+			 arrSQLTerms[1]._strColumnName = "gpa";
+			 arrSQLTerms[1]._strOperator = "=";
+			 arrSQLTerms[1]._objValue = new Double(0.95);
+			 
+			 String[] strarrOperators = new String[1];
+			 
+			 strarrOperators[0] = "AND"; 
+			 // select * from Student where name = “John Noor” or gpa = 1.5; 
+			 Iterator resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators); 
+			 while (resultSet.hasNext()) {
 				System.out.println(resultSet.next());
 			}
 		}
