@@ -484,7 +484,7 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 				System.out.println(ex.toString());
 			}
 			try{
-			// Hashtable<String, Object> htblColNameValue = new Hashtable<>();
+			Hashtable<String, Object> htblColNameValue = new Hashtable<>();
 			//  htblColNameValue.put("id", Integer.valueOf(2343432));
 			//  htblColNameValue.put("name", "Ahmed Noor");
 			//  htblColNameValue.put("gpa", Double.valueOf(0.95));
@@ -504,7 +504,7 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 
 			//  htblColNameValue.clear( );
 			//  htblColNameValue.put("id", Integer.valueOf( 23498 ));
-			//  htblColNameValue.put("name", new String("John Noor" ) );
+			//  htblColNameValue.put("name", new String("John sakr" ) );
 			//  htblColNameValue.put("gpa", Double.valueOf( 1.0 ) );
 			//  dbApp.insertIntoTable( strTableName , htblColNameValue );
 
@@ -529,41 +529,55 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 			 
 			 
 			//  dbApp.deleteFromTable("Student",htblColNameValue);
-			// //  System.out.println(dbApp);
-			//  htblColNameValue.clear( );
-			//  htblColNameValue.put("id", Integer.valueOf( 23498 ));
-			//  htblColNameValue.put("name", new String("John Noor" ) );
-			//  htblColNameValue.put("gpa", Double.valueOf( 1.0 ) );
+			 System.out.println(dbApp);
+			 htblColNameValue.clear( );
+			 htblColNameValue.put("id", Integer.valueOf( 23498 ));
+			 htblColNameValue.put("name", new String("John Noor" ) );
+			 htblColNameValue.put("gpa", Double.valueOf( 1.0 ) );
 
-			// dbApp.deleteFromTable("Student",htblColNameValue);
+			dbApp.deleteFromTable("Student",htblColNameValue);
 			// System.out.println(dbApp);
-				System.out.println(dbApp);
-			 SQLTerm[] arrSQLTerms;
-			 arrSQLTerms = new SQLTerm[2];
+				//System.out.println(dbApp);
+			//  SQLTerm[] arrSQLTerms;
+			//  arrSQLTerms = new SQLTerm[2];
 			 
-			 // Initialize elements before accessing fields
-			 arrSQLTerms[0] = new SQLTerm();
-			 arrSQLTerms[0]._strTableName = "Student";
-			 arrSQLTerms[0]._strColumnName = "name";
-			 arrSQLTerms[0]._strOperator = "=";
-			 arrSQLTerms[0]._objValue = "Ahmed Noor";
+			//  // Initialize elements before accessing fields
+			//  arrSQLTerms[0] = new SQLTerm();
+			//  arrSQLTerms[0]._strTableName = "Student";
+			//  arrSQLTerms[0]._strColumnName = "name";
+			//  arrSQLTerms[0]._strOperator = "=";
+			//  arrSQLTerms[0]._objValue = "Ahmed Noor";
 			 
-			 arrSQLTerms[1] = new SQLTerm();
-			 arrSQLTerms[1]._strTableName = "Student";
-			 arrSQLTerms[1]._strColumnName = "gpa";
-			 arrSQLTerms[1]._strOperator = "=";
-			 arrSQLTerms[1]._objValue = new Double(0.95);
+			//  arrSQLTerms[1] = new SQLTerm();
+			//  arrSQLTerms[1]._strTableName = "Student";
+			//  arrSQLTerms[1]._strColumnName = "gpa";
+			//  arrSQLTerms[1]._strOperator = "=";
+			//  arrSQLTerms[1]._objValue = new Double(0.95);
 			 
-			 String[] strarrOperators = new String[1];
+			//  String[] strarrOperators = new String[1];
 			 
-			 strarrOperators[0] = "AND"; 
-			 // select * from Student where name = “John Noor” or gpa = 1.5; 
-			 Iterator resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators); 
-			 while (resultSet.hasNext()) {
-				System.out.println(resultSet.next());
-			}
-			dbApp.createIndex(strTableName, "id", "idIndex" );
+			//  strarrOperators[0] = "AND"; 
+			//  // select * from Student where name = “John Noor” or gpa = 1.5; 
+			//  Iterator resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators); 
+			//  while (resultSet.hasNext()) {
+			// 	System.out.println(resultSet.next());
+			// }
+			System.out.println(dbApp);
 
+			//dbApp.createIndex(strTableName, "gpa", "gpaIndex" );
+			// htblColNameValue.clear( );
+			//  htblColNameValue.put("id", Integer.valueOf( 665 ));
+			//  htblColNameValue.put("name", new String("Nado" ) );
+			//  htblColNameValue.put("gpa", Double.valueOf( 1.3 ) );
+			//  dbApp.insertIntoTable( strTableName , htblColNameValue );
+			//  htblColNameValue.clear( );
+			//  htblColNameValue.put("id", Integer.valueOf( 83942 ));
+			//  htblColNameValue.put("name", new String("bash" ) );
+			//  htblColNameValue.put("gpa", Double.valueOf( 2.1 ) );
+			//  dbApp.insertIntoTable( strTableName , htblColNameValue );
+			// dbApp.createIndex(strTableName, "id", "idIndex" );
+
+			 System.out.println(dbApp);
 		}
 		catch(Exception exp){
 			exp.printStackTrace( );

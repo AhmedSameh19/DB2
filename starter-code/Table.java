@@ -4,10 +4,11 @@ import java.util.*;
     static int PAGE_SIZE;
     String name;
     Vector<Integer> pageNums;
-    transient Hashtable<String,String> indexNames;
+    Hashtable<String,String> indexNames;
     public Table(String name) {
         this.name = name;
         this.pageNums = new Vector<>();
+        this.indexNames=new Hashtable<>();
     }
 
     public void insertIntoTable(Row record) throws DBAppException{
@@ -54,13 +55,84 @@ import java.util.*;
                     }
                 }
             }
+           
             this.insertRec(record, p);
+            if(this.indexNames.size()>0)
+                this.insertBTree(record);
+        
 
         }
-    public void insertBTree(){
+    public void insertBTree(Row record) throws DBAppException{
+        for (Object key : indexNames.keySet()) {
+            String indexTableName = indexNames.get(key);
+            BPlusTree t = getTree(indexTableName);
+            Vector<Row> returned = new Vector<>();
+            
+            Object k= record.getValue(key);
+            if (k instanceof String) {
+                 String k0= (String)k.toString();
+
+                returned = (Vector<Row>) t.search(k0);
+            } else if (k instanceof Double) {
+                Double k1= (Double)k;
+
+                returned = (Vector<Row>) t.search(k1);
+            } else if (k instanceof Integer) {
+                Integer k2= (Integer)k;
+                returned = (Vector<Row>) t.search(k2);
+            } else {
+                throw new DBAppException("Unsupported key type");
+            }
+            if (returned == null) {
+                Vector<Row> x = new Vector<>();
+                x.add(record);
+                Object z=record.getValue(key);
+                if (z instanceof String) {
+                    String k3= (String) z.toString();
+                    t.insert(k3, x);  
+                } else if (z instanceof Double) {
+                    Double k4= (Double) z;
+                    t.insert(k4, x);  
+                } else if (z instanceof Integer) {
+                    Integer k5= (Integer) z;
+                    t.insert(k5, x);  
+                } else {
+                    throw new DBAppException("Unsupported key type");
+                }
+            } else {
+                returned.add(record);
+                Object z=record.getValue(key);
+                if (z instanceof String) {
+                    String k8= (String) z.toString();
+                    t.insert(k8, returned);  
+                              } else if (z instanceof Double) {
+                    Double k6= (Double) z;
+                    t.insert(k6, returned);  
+                              } else if (z instanceof Integer) {
+                    Integer k7= (Integer) z;
+                    t.insert(k7, returned);  
+                               } else {
+                    throw new DBAppException("Unsupported key type");
+                }            }
+                saveTree(t, indexTableName);
+        }
+       
+    }
+    public static BPlusTree getTree(String treeName) throws DBAppException{
+        try {
+            BPlusTree p = null;
+            FileInputStream fileIn = new FileInputStream("Index/" + treeName + ".class");
+            ObjectInputStream in = new ObjectInputStream(fileIn);
+            p = (BPlusTree) in.readObject();
+            in.close();
+            fileIn.close();
+            return p;
+        }
+        catch (Exception e){
+            throw new DBAppException(e);
+        }
 
     }
-    
     private void insertRec(Row record, Page p) throws DBAppException {
         Vector<Row> tuples = p.getTuples();
         if (tuples.isEmpty()){
@@ -355,25 +427,96 @@ import java.util.*;
         if (pk == null || pg==null) {
             throw new DBAppException("Check your inputs!!!");
         }
-        int low = 0, high = pg.getTuples().size() - 1, mid = (low + high) / 2;
-        while (low <= high) {
-            mid = (low + high) / 2;
-            Row tempTup = pg.getTuples().get(mid);
-            Object midVal = tempTup.getValue(pk);
-            int com= comparePKs(strClusteringKeyValue.trim(),midVal);
-            if (com== 0) {
-                deleteRow(mid,pg);
-                return;
-            }
-            if (com < 0)
-                high = mid - 1;
-            else
-                low = mid + 1;
-        
 
-    }
+        else{
+            int low = 0, high = pg.getTuples().size() - 1, mid = (low + high) / 2;
+            while (low <= high) {
+                mid = (low + high) / 2;
+                Row tempTup = pg.getTuples().get(mid);
+                Object midVal = tempTup.getValue(pk);
+                int com= comparePKs(strClusteringKeyValue.trim(),midVal);
+                if (com== 0) {
+                    deleteRow(mid,pg);
+                    return;
+                }
+                if (com < 0)
+                    high = mid - 1;
+                else
+                    low = mid + 1;
+            
+    
+        }
+        deletBTree(htblColNameValue,strClusteringKeyValue);
+
+        }
+        
     throw new DBAppException("This Tuple isn't avaliable in this table");
 
+}
+    public void deletBTree(Hashtable<String,Object> htblColNameValue,String strClusteringKeyValue) throws DBAppException{
+        for (Object key : indexNames.keySet()) {
+            String indexTableName = indexNames.get(key);
+            BPlusTree t = getTree(indexTableName);
+
+            Vector<Row> returned = new Vector<>();
+            
+            Object k= htblColNameValue.get(key);
+            if (k instanceof String) {
+                 String k0= (String)k.toString();
+
+                returned = (Vector<Row>) t.search(k0);
+            } else if (k instanceof Double) {
+                Double k1= (Double)k;
+
+                returned = (Vector<Row>) t.search(k1);
+            } else if (k instanceof Integer) {
+                Integer k2= (Integer)k;
+                returned = (Vector<Row>) t.search(k2);
+            } else {
+                throw new DBAppException("Unsupported key type");
+            }
+            System.out.println(returned);
+            String pk =DBApp.getClusterKey(this.name);
+            if(returned.size()>=2){
+                for(Row r:returned){
+                    
+                    if((r.getData().get(strClusteringKeyValue)).equals(htblColNameValue.get(pk))){
+                        returned.remove(r);
+                        Object z=k;
+                        if (z instanceof String) {
+                            String k8= (String) z.toString();
+                            t.insert(k8, returned);  
+                                      } else if (z instanceof Double) {
+                            Double k6= (Double) z;
+                            t.insert(k6, returned);  
+                                      } else if (z instanceof Integer) {
+                            Integer k7= (Integer) z;
+                            t.insert(k7, returned);  
+                                       } else {
+                            throw new DBAppException("Unsupported key type");
+                        }            }                    }
+                }
+            
+            else{
+                Object y= htblColNameValue.get(key);
+            if (y instanceof String) {
+                 String k0= (String)y.toString();
+
+                t.delete(k0);
+            } else if (y instanceof Double) {
+                Double k1= (Double)y;
+
+                t.delete(k1);
+            } else if (y instanceof Integer) {
+                Integer k2= (Integer)y;
+                t.delete(k2);
+            } else {
+                throw new DBAppException("Unsupported key type");
+            }
+            }
+            saveTree(t, indexTableName);      
+
+    }
 }
 
     public Page findPage (String strClusteringKeyValue) throws DBAppException{
@@ -408,21 +551,11 @@ import java.util.*;
         return sb.toString();
     }
     public void indexing (String strColName,String strIndexName) throws DBAppException{
-        String pk=DBApp.getClusterKey(this.name).trim();
+        if(indexNames.contains(strIndexName)){
+            throw new DBAppException("Index already Exists");
+        }
         BPlusTree myTree=new BPlusTree<>(PAGE_SIZE-1);
-        if(pk.equalsIgnoreCase(strColName)){
-            for(int i=0;i<pageNums.size();i++){
-                Page p =getPageByNumber(i+1);
-                for(Row r : p.getTuples()){
-                    
-                    Object col= r.getValue(strColName);
-                    myTree.insert((Comparable)col,r);
-                }
-                savePage(p);
-
-        }
-        }
-        else{
+      
             Hashtable<Object,Vector<Row>> rows=new Hashtable<>();
             for (int i = 0; i < pageNums.size(); i++) {
                 Page p = getPageByNumber(i + 1);
@@ -436,7 +569,7 @@ import java.util.*;
                         Vector<Row> newRowVector = new Vector<>();
                         newRowVector.add(r);
                         rows.put(colValue, newRowVector);
-                    }
+                                        }
                 }
                 savePage(p);
 
@@ -446,7 +579,7 @@ import java.util.*;
                 myTree.insert((Comparable)key, rowVector);
                 
             }
-            }
+            
             saveTree(myTree, strIndexName);
             indexNames.put(strColName,strIndexName);
     }
@@ -493,20 +626,24 @@ import java.util.*;
     //         e.printStackTrace();
     //     }
     // }
-    try {
-        Page p = null;
-        FileInputStream fileIn = new FileInputStream("Pages/" + "Student" + "" + 2 + ".class");
-        ObjectInputStream in = new ObjectInputStream(fileIn);
-        p = (Page) in.readObject();
-        in.close();
-        fileIn.close();
-       System.out.println(p);
-    }
-    catch (Exception e){
-        throw new DBAppException(e);
-    }
-   
+    // try {
+    //     Page p = null;
+    //     FileInputStream fileIn = new FileInputStream("Pages/" + "Student" + "" + 2 + ".class");
+    //     ObjectInputStream in = new ObjectInputStream(fileIn);
+    //     p = (Page) in.readObject();
+    //     in.close();
+    //     fileIn.close();
+    //    System.out.println(p);
+    // }
+    // catch (Exception e){
+    //     throw new DBAppException(e);
+    // }
+//     Hashtable<String,String> indexNames=new Hashtable<>();
+
+//    System.out.println(indexNames.size());
     // String path = "Pages/" + "Student" + "" + 3 + ".class";
     // File file = new File(path);
     // file.delete();
+    BPlusTree bp= getTree("gpaIndex");
+    System.out.println(bp);
 }}

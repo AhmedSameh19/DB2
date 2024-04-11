@@ -17,7 +17,7 @@ public class Row  implements Serializable{
     public void setData(Hashtable<String, Object> data) {
         this.data = data;
     }
-    public Object getValue(String key) {
+    public Object getValue(Object key) {
         return data.get(key);
     }
     public void setValue(String column, Object value) {
@@ -61,4 +61,5 @@ public class Row  implements Serializable{
     //     System.out.println( r1);
     //     System.out.println("sakr".compareTo("ahmed"));
     // }
+   
 }
