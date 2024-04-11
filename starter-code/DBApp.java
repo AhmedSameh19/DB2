@@ -7,8 +7,6 @@ import java.util.*;
 
 public class DBApp {
 	HashSet <String> tableNames=new HashSet<>();
-
-
 	public DBApp( ) throws DBAppException{
 		this.init();
 	}
@@ -18,7 +16,13 @@ public class DBApp {
         try {
             InputStream input = new FileInputStream("starter-code\\resources\\DBApp.config");
             props.load(input);
-            Table.PAGE_SIZE = Integer.parseInt(props.getProperty("MaximumRowsCountinPage"));
+            int size = Integer.parseInt(props.getProperty("MaximumRowsCountinPage"));
+			if(size<4){
+				throw new DBAppException("MaximumRowsCountinPage must be more than 3 it's value: "+ size);
+			}
+			else{
+				Table.PAGE_SIZE=size;
+			}
         } catch (Exception e) {
             throw new DBAppException(e);
         }
@@ -36,6 +40,9 @@ public class DBApp {
         File pagesFolder = new File("Pages");
         if (!pagesFolder.isDirectory())
             pagesFolder.mkdir();
+		File indexFolder = new File("Index");
+			if (!indexFolder.isDirectory())
+				indexFolder.mkdir();
 		
 	}
 public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException {
@@ -143,14 +150,56 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 
 
 	// following method creates a B+tree index 
-	public void createIndex(String   strTableName,
-							String   strColName,
-							String   strIndexName) throws DBAppException{
-		
-		throw new DBAppException("not implemented yet");
+	public void createIndex(String strTableName, String strColName, String strIndexName) throws DBAppException {
+		try {
+			overRideCSV(strTableName, strColName, strIndexName);
+			Table t = getTable(strTableName);
+			t.indexing(strColName,strIndexName);
+			saveTable(t);
+		} catch (Exception e) {
+			throw new DBAppException("Error while Indexing: " + e.getMessage());
+		}
 	}
 
+	public void overRideCSV(String strTableName, String strColName, String strIndexName) throws DBAppException{
+		BufferedReader br = null;
+		BufferedWriter bw = null;
+		String itemsPath = "metadata.csv";
+		try {
+			br = new BufferedReader(new FileReader(itemsPath));
+			String line;
+			StringBuilder fileContent = new StringBuilder();
+			boolean flag=false;
+			while ((line = br.readLine()) != null) {
+				String[] data = line.split(",");
+				String tableName = data[0].trim();
+				String columnName = data[1].trim();
+				if (tableName.equalsIgnoreCase(strTableName) && columnName.equalsIgnoreCase(strColName)) {
+					data[4] = strIndexName;
+					data[5] = "B+Tree";
+					line = String.join(",", data);
+					flag =true;
+				}
 
+				fileContent.append(line).append("\n");
+			}
+			if(!flag)
+				throw new DBAppException("This column doesn't exist in this table!");
+			bw = new BufferedWriter(new FileWriter(itemsPath));
+			bw.write(fileContent.toString());
+		} catch (IOException e) {
+			throw new DBAppException(e);
+		} finally {
+			try {
+				if (br != null)
+					br.close();
+				if (bw != null)
+					bw.close();
+			} catch (IOException e) {
+				throw new DBAppException(e);
+			}
+		}
+	}
 	// following method inserts one row only. 
 	// htblColNameValue must include a value for the primary key
 	public void insertIntoTable(String strTableName, 
@@ -434,62 +483,61 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 			catch( Exception ex ){
 				System.out.println(ex.toString());
 			}
-		// 	//dbApp.createIndex( strTableName, "gpa", "gpaIndex" );
 			try{
-			  Hashtable<String, Object> htblColNameValue = new Hashtable<>();
-			 htblColNameValue.put("id", Integer.valueOf(2343432));
-			 htblColNameValue.put("name", "Ahmed Noor");
-			 htblColNameValue.put("gpa", Double.valueOf(0.95));
-			 dbApp.insertIntoTable(strTableName, htblColNameValue);
+			// Hashtable<String, Object> htblColNameValue = new Hashtable<>();
+			//  htblColNameValue.put("id", Integer.valueOf(2343432));
+			//  htblColNameValue.put("name", "Ahmed Noor");
+			//  htblColNameValue.put("gpa", Double.valueOf(0.95));
+			//  dbApp.insertIntoTable(strTableName, htblColNameValue);
 
-			 htblColNameValue.clear( );
-			 htblColNameValue.put("id", Integer.valueOf( 453455 ));
-			 htblColNameValue.put("name", new String("Ahmed tarek" ) );
-			 htblColNameValue.put("gpa", Double.valueOf( 0.95 ) );
-			 dbApp.insertIntoTable( strTableName , htblColNameValue );
+			//  htblColNameValue.clear( );
+			//  htblColNameValue.put("id", Integer.valueOf( 453455 ));
+			//  htblColNameValue.put("name", new String("Ahmed tarek" ) );
+			//  htblColNameValue.put("gpa", Double.valueOf( 0.95 ) );
+			//  dbApp.insertIntoTable( strTableName , htblColNameValue );
 
-			 htblColNameValue.clear( );
-			 htblColNameValue.put("id", Integer.valueOf( 453452325 ));
-			 htblColNameValue.put("name", new String("Ahmed khaled" ) );
-			 htblColNameValue.put("gpa", Double.valueOf( 1.9 ) );
-			 dbApp.insertIntoTable( strTableName , htblColNameValue );
+			//  htblColNameValue.clear( );
+			//  htblColNameValue.put("id", Integer.valueOf( 453452325 ));
+			//  htblColNameValue.put("name", new String("Ahmed khaled" ) );
+			//  htblColNameValue.put("gpa", Double.valueOf( 1.9 ) );
+			//  dbApp.insertIntoTable( strTableName , htblColNameValue );
 
-			 htblColNameValue.clear( );
-			 htblColNameValue.put("id", Integer.valueOf( 23498 ));
-			 htblColNameValue.put("name", new String("John Noor" ) );
-			 htblColNameValue.put("gpa", Double.valueOf( 1.0 ) );
-			 dbApp.insertIntoTable( strTableName , htblColNameValue );
+			//  htblColNameValue.clear( );
+			//  htblColNameValue.put("id", Integer.valueOf( 23498 ));
+			//  htblColNameValue.put("name", new String("John Noor" ) );
+			//  htblColNameValue.put("gpa", Double.valueOf( 1.0 ) );
+			//  dbApp.insertIntoTable( strTableName , htblColNameValue );
 
-			 htblColNameValue.clear( );
-			 htblColNameValue.put("id", Integer.valueOf( 23499 ));
-			 htblColNameValue.put("name", new String("John Noor" ) );
-			 htblColNameValue.put("gpa", Double.valueOf( 0.88 ) );
-			 dbApp.insertIntoTable( strTableName , htblColNameValue );
-			 System.out.println(dbApp);
-
-			 htblColNameValue.clear( );
-			 htblColNameValue.put("name", new String("John Noor" ) );
-			 htblColNameValue.put("gpa", Double.valueOf( 1.9 ) );
-
-			 dbApp.updateTable(strTableName,"23498", htblColNameValue );
-			 System.out.println(dbApp);
-
-			 htblColNameValue.clear( );
-			 htblColNameValue.put("id", Integer.valueOf( 23499 ));
-			 htblColNameValue.put("name", new String("John Noor" ) );
-			 htblColNameValue.put("gpa", Double.valueOf( 0.88 ) );
-			 
-			 
-			 dbApp.deleteFromTable("Student",htblColNameValue);
+			//  htblColNameValue.clear( );
+			//  htblColNameValue.put("id", Integer.valueOf( 23499 ));
+			//  htblColNameValue.put("name", new String("John Noor" ) );
+			//  htblColNameValue.put("gpa", Double.valueOf( 0.88 ) );
+			//  dbApp.insertIntoTable( strTableName , htblColNameValue );
 			//  System.out.println(dbApp);
-			 htblColNameValue.clear( );
-			 htblColNameValue.put("id", Integer.valueOf( 23498 ));
-			 htblColNameValue.put("name", new String("John Noor" ) );
-			 htblColNameValue.put("gpa", Double.valueOf( 1.0 ) );
 
-			dbApp.deleteFromTable("Student",htblColNameValue);
-			System.out.println(dbApp);
+			//  htblColNameValue.clear( );
+			//  htblColNameValue.put("name", new String("John Noor" ) );
+			//  htblColNameValue.put("gpa", Double.valueOf( 1.9 ) );
 
+			//  dbApp.updateTable(strTableName,"23498", htblColNameValue );
+			//  System.out.println(dbApp);
+
+			//  htblColNameValue.clear( );
+			//  htblColNameValue.put("id", Integer.valueOf( 23499 ));
+			//  htblColNameValue.put("name", new String("John Noor" ) );
+			//  htblColNameValue.put("gpa", Double.valueOf( 0.88 ) );
+			 
+			 
+			//  dbApp.deleteFromTable("Student",htblColNameValue);
+			// //  System.out.println(dbApp);
+			//  htblColNameValue.clear( );
+			//  htblColNameValue.put("id", Integer.valueOf( 23498 ));
+			//  htblColNameValue.put("name", new String("John Noor" ) );
+			//  htblColNameValue.put("gpa", Double.valueOf( 1.0 ) );
+
+			// dbApp.deleteFromTable("Student",htblColNameValue);
+			// System.out.println(dbApp);
+				System.out.println(dbApp);
 			 SQLTerm[] arrSQLTerms;
 			 arrSQLTerms = new SQLTerm[2];
 			 
@@ -514,6 +562,8 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 			 while (resultSet.hasNext()) {
 				System.out.println(resultSet.next());
 			}
+			dbApp.createIndex(strTableName, "id", "idIndex" );
+
 		}
 		catch(Exception exp){
 			exp.printStackTrace( );

@@ -1,11 +1,10 @@
 import java.io.*;
 import java.util.*;
-import java.time.*;
     public class Table implements Serializable {
     static int PAGE_SIZE;
     String name;
     Vector<Integer> pageNums;
-
+    transient Hashtable<String,String> indexNames;
     public Table(String name) {
         this.name = name;
         this.pageNums = new Vector<>();
@@ -58,7 +57,9 @@ import java.time.*;
             this.insertRec(record, p);
 
         }
+    public void insertBTree(){
 
+    }
     
     private void insertRec(Row record, Page p) throws DBAppException {
         Vector<Row> tuples = p.getTuples();
@@ -405,6 +406,64 @@ import java.time.*;
             }
         }
         return sb.toString();
+    }
+    public void indexing (String strColName,String strIndexName) throws DBAppException{
+        String pk=DBApp.getClusterKey(this.name).trim();
+        BPlusTree myTree=new BPlusTree<>(PAGE_SIZE-1);
+        if(pk.equalsIgnoreCase(strColName)){
+            for(int i=0;i<pageNums.size();i++){
+                Page p =getPageByNumber(i+1);
+                for(Row r : p.getTuples()){
+                    
+                    Object col= r.getValue(strColName);
+                    myTree.insert((Comparable)col,r);
+                }
+                savePage(p);
+
+        }
+        }
+        else{
+            Hashtable<Object,Vector<Row>> rows=new Hashtable<>();
+            for (int i = 0; i < pageNums.size(); i++) {
+                Page p = getPageByNumber(i + 1);
+        
+                for (Row r : p.getTuples()) {
+                    Object colValue = r.getValue(strColName); 
+        
+                    if (rows.containsKey(colValue)) {
+                        rows.get(colValue).add(r);
+                    } else {
+                        Vector<Row> newRowVector = new Vector<>();
+                        newRowVector.add(r);
+                        rows.put(colValue, newRowVector);
+                    }
+                }
+                savePage(p);
+
+            }
+            for (Object key : rows.keySet()) {
+                Vector<Row> rowVector = rows.get(key);
+                myTree.insert((Comparable)key, rowVector);
+                
+            }
+            }
+            saveTree(myTree, strIndexName);
+            indexNames.put(strColName,strIndexName);
+    }
+        
+
+    public void saveTree(BPlusTree b,String strIndexName) throws DBAppException {
+        String filePath = "Index/" + strIndexName + ".class";
+        try (FileOutputStream fileOut = new FileOutputStream(filePath);
+            ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
+            out.writeObject(b);
+            out.flush();    
+            //closing the stream    
+            out.close();
+
+        } catch (IOException e) {
+            throw new DBAppException(e);
+        }
     }
      public static void main(String[] args) throws DBAppException {
     //     Table t =new Table("aa");
