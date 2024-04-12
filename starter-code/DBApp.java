@@ -510,8 +510,8 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 
 			//  htblColNameValue.clear( );
 			//  htblColNameValue.put("id", Integer.valueOf( 23499 ));
-			//  htblColNameValue.put("name", new String("John Noor" ) );
-			//  htblColNameValue.put("gpa", Double.valueOf( 0.88 ) );
+			//  htblColNameValue.put("name", new String("John Noorb" ) );
+			//  htblColNameValue.put("gpa", Double.valueOf( 0.11 ) );
 			//  dbApp.insertIntoTable( strTableName , htblColNameValue );
 			//  System.out.println(dbApp);
 
@@ -523,19 +523,18 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 			//  System.out.println(dbApp);
 
 			//  htblColNameValue.clear( );
-			//  htblColNameValue.put("id", Integer.valueOf( 23499 ));
-			//  htblColNameValue.put("name", new String("John Noor" ) );
-			//  htblColNameValue.put("gpa", Double.valueOf( 0.88 ) );
-			 
+	 		//  htblColNameValue.put("id", Integer.valueOf( 453455 ));
+			//  htblColNameValue.put("name", new String("Ahmed tarek" ) );
+			//  htblColNameValue.put("gpa", Double.valueOf( 1.9 ) );
 			 
 			//  dbApp.deleteFromTable("Student",htblColNameValue);
 			 System.out.println(dbApp);
-			 htblColNameValue.clear( );
-			 htblColNameValue.put("id", Integer.valueOf( 23498 ));
-			 htblColNameValue.put("name", new String("John Noor" ) );
-			 htblColNameValue.put("gpa", Double.valueOf( 1.0 ) );
-
-			dbApp.deleteFromTable("Student",htblColNameValue);
+		// htblColNameValue.clear( );
+		// 	 htblColNameValue.put("id", Integer.valueOf( 665 ));
+		// 	 htblColNameValue.put("name", new String("Nado" ) );
+		// 	 htblColNameValue.put("gpa", Double.valueOf( 1.3 ) );
+				
+		// 	 dbApp.deleteFromTable("Student",htblColNameValue);
 			// System.out.println(dbApp);
 				//System.out.println(dbApp);
 			//  SQLTerm[] arrSQLTerms;
@@ -564,7 +563,7 @@ public void writeNewColumn( ArrayList<String[]> metadata) throws DBAppException 
 			// }
 			System.out.println(dbApp);
 
-			//dbApp.createIndex(strTableName, "gpa", "gpaIndex" );
+			dbApp.createIndex(strTableName, "gpa", "gpaIndex" );
 			// htblColNameValue.clear( );
 			//  htblColNameValue.put("id", Integer.valueOf( 665 ));
 			//  htblColNameValue.put("name", new String("Nado" ) );

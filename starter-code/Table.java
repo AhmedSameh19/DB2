@@ -202,15 +202,10 @@ import java.util.*;
             int pgNum = pageNums.get(i);
             Page p = getPageByNumber(pgNum);
             if (p.getTuples().get(p.getTuples().size() - 1).compareTo(t) > 0) {
-//                if (p.getTuples().get(0).compareTo(t) > 0 && i != 0){
-//                    Page prev = getPageByNumber(pageNums.get(i-1));
-//                    if (prev.getTuples().size() < PAGE_SIZE)
-//                        return prev;
-//                }
                 return p;
             }
         }
-        return null; // bigger than largest record in last page
+        return null; 
     }
     public void createPage() throws DBAppException{
         if (pageNums.size() == 0){
@@ -383,7 +378,9 @@ import java.util.*;
         return null;
     }
     
-    public void updatePagesNumbers() throws DBAppException {
+    public void 
+    
+    updatePagesNumbers() throws DBAppException {
         for (int i = 0; i < pageNums.size(); i++) {
             int pageNumber = pageNums.get(i);
             Page page = getPageByNumber(pageNumber);
@@ -435,9 +432,8 @@ import java.util.*;
                 Row tempTup = pg.getTuples().get(mid);
                 Object midVal = tempTup.getValue(pk);
                 int com= comparePKs(strClusteringKeyValue.trim(),midVal);
-                if (com== 0) {
+                if (com== 0 && isEqual(htblColNameValue, tempTup)) {
                     deleteRow(mid,pg);
-                    return;
                 }
                 if (com < 0)
                     high = mid - 1;
@@ -446,14 +442,43 @@ import java.util.*;
             
     
         }
-        deletBTree(htblColNameValue,strClusteringKeyValue);
+        deleteBTree(htblColNameValue,strClusteringKeyValue);
 
         }
         
     throw new DBAppException("This Tuple isn't avaliable in this table");
 
 }
-    public void deletBTree(Hashtable<String,Object> htblColNameValue,String strClusteringKeyValue) throws DBAppException{
+public boolean isEqual(Hashtable<String, Object> htblColNameValue, Row row) {
+    Hashtable<String, Object> temp = row.getData();
+    
+    if (htblColNameValue.size() != temp.size()) {
+        return false;
+    }
+    
+    for (String key : htblColNameValue.keySet()) {
+        if (!temp.containsKey(key)) {
+            return false;
+        }
+        
+        Object value1 = htblColNameValue.get(key);
+        Object value2 = temp.get(key);
+        
+        if (value1 == null) {
+            if (value2 != null) {
+                return false;
+            }
+        } else {
+            if (!value1.equals(value2)) {
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+
+    public void deleteBTree(Hashtable<String,Object> htblColNameValue,String strClusteringKeyValue) throws DBAppException{
         for (Object key : indexNames.keySet()) {
             String indexTableName = indexNames.get(key);
             BPlusTree t = getTree(indexTableName);
@@ -475,12 +500,14 @@ import java.util.*;
             } else {
                 throw new DBAppException("Unsupported key type");
             }
-            System.out.println(returned);
+            System.out.println("here"+returned);
             String pk =DBApp.getClusterKey(this.name);
             if(returned.size()>=2){
                 for(Row r:returned){
-                    
-                    if((r.getData().get(strClusteringKeyValue)).equals(htblColNameValue.get(pk))){
+                    System.out.println(pk);
+                    System.out.println("htblCol"+htblColNameValue.get(pk.trim()));
+                    System.out.println("getData.get"+r.getData().get(pk.trim()));
+                    if(comparePKs((String)htblColNameValue.get(pk.trim()).toString(),(r.getData().get(pk.trim())))==0){
                         returned.remove(r);
                         Object z=k;
                         if (z instanceof String) {
@@ -505,7 +532,7 @@ import java.util.*;
                 t.delete(k0);
             } else if (y instanceof Double) {
                 Double k1= (Double)y;
-
+                System.out.println(k1);
                 t.delete(k1);
             } else if (y instanceof Integer) {
                 Integer k2= (Integer)y;
