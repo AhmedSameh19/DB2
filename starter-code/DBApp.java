@@ -217,11 +217,12 @@ public class DBApp {
 			verifyRow(strTableName, htblColNameValue);
 			Table t1 = getTable(strTableName);
 			Row t = new Row(htblColNameValue, strTableName);
-			if (t1.inTable(t)) {
+			if (!(t1.inTable(t))) {
 				t1.insertIntoTable(t);
 				saveTable(t1);
 
 			} else {
+
 				saveTable(t1);
 
 				throw new DBAppException("Error inserting record change the PK already exists ");
@@ -264,9 +265,16 @@ public class DBApp {
 			verifyRow(strTableName, htblColNameValue);
 			Table t = getTable(strTableName);
 			Row tuple = new Row(htblColNameValue, strTableName);
-			if (t.inTable(tuple))
+			if (!t.inTable(tuple)) {
 				t.updateTable(tuple, strClusteringKeyValue);
-			saveTable(t);
+				saveTable(t);
+
+			} else {
+
+				saveTable(t);
+				throw new DBAppException("Error Updating record");
+
+			}
 		} catch (Exception e) {
 			throw new DBAppException("Error updating record: " + e.getMessage());
 		}
@@ -283,9 +291,8 @@ public class DBApp {
 			verifyRow(strTableName, htblColNameValue);
 			Table t = getTable(strTableName);
 			t.deleteRecord(htblColNameValue);
-			Row tuple = new Row(htblColNameValue, strTableName);
-			if (t.inTable(tuple))
-				saveTable(t);
+			saveTable(t);
+				
 		} catch (DBAppException e) {
 			throw new DBAppException("Error deleting record: " + e.getMessage());
 		}
@@ -377,14 +384,16 @@ public class DBApp {
 		ArrayList<Hashtable<String, String>> dataOfTable = readCsv(strTableName);
 		Hashtable<String, String> htblColNameType = dataOfTable.get(0);
 		String pk = dataOfTable.get(1).get("pk").trim();
-
 		for (String str : htblColNameValue.keySet()) {
 			if (!htblColNameType.keySet().contains(str))
 				throw new DBAppException("THIS COLUMN DOESNT EXIST");
 		}
 		for (String str : htblColNameType.keySet()) {
-			if (htblColNameValue.get(str) == values.NULL && !str.equals(pk))
+			if (htblColNameValue.get(str) == values.NULL && !str.equals(pk)){
 				continue;
+
+			}
+
 			else if (htblColNameValue.get(str) == values.NULL && str.equals(pk))
 				throw new DBAppException("PK CAN'T BE NULL");
 			if (htblColNameType.get(str).toLowerCase().equals("java.lang.string")) {
@@ -469,8 +478,6 @@ public class DBApp {
 		DBApp dbApp = new DBApp();
 		String strTableName = "aa";
 		try {
-			tableNames.clear();
-
 			Hashtable<String, String> htblColNameType = new Hashtable<>();
 			// htblColNameType.put("id", "java.lang.Integer");
 			// htblColNameType.put("name", "java.lang.String");
@@ -487,36 +494,36 @@ public class DBApp {
 			System.out.println(ex.toString());
 		}
 		try {
-			Hashtable<String, Object> htblColNameValue = new Hashtable<>();
-			htblColNameValue.put("id", Integer.valueOf(2343432));
-			htblColNameValue.put("name", "Ahmed Noor");
-			htblColNameValue.put("gpa", Double.valueOf(0.95));
-			dbApp.insertIntoTable(strTableName, htblColNameValue);
+			// Hashtable<String, Object> htblColNameValue = new Hashtable<>();
+			// htblColNameValue.put("id", Integer.valueOf(2343432));
+			// htblColNameValue.put("name", "Ahmed Noor");
+			// htblColNameValue.put("gpa", Double.valueOf(0.95));
+			// dbApp.insertIntoTable(strTableName, htblColNameValue);
 
-			htblColNameValue.clear();
-			htblColNameValue.put("id", Integer.valueOf(453455));
-			htblColNameValue.put("name", new String("Ahmed tarek"));
-			htblColNameValue.put("gpa", Double.valueOf(0.95));
-			dbApp.insertIntoTable(strTableName, htblColNameValue);
+			// htblColNameValue.clear();
+			// htblColNameValue.put("id", Integer.valueOf(453455));
+			// htblColNameValue.put("name", new String("Ahmed tarek"));
+			// htblColNameValue.put("gpa", Double.valueOf(0.95));
+			// dbApp.insertIntoTable(strTableName, htblColNameValue);
 
-			htblColNameValue.clear();
-			htblColNameValue.put("id", Integer.valueOf(453452325));
-			htblColNameValue.put("name", new String("Ahmed khaled"));
-			htblColNameValue.put("gpa", Double.valueOf(1.9));
-			dbApp.insertIntoTable(strTableName, htblColNameValue);
+			// htblColNameValue.clear();
+			// htblColNameValue.put("id", Integer.valueOf(453452325));
+			// htblColNameValue.put("name", new String("Ahmed khaled"));
+			// htblColNameValue.put("gpa", Double.valueOf(1.9));
+			// dbApp.insertIntoTable(strTableName, htblColNameValue);
 
-			htblColNameValue.clear();
-			htblColNameValue.put("id", Integer.valueOf(23498));
-			htblColNameValue.put("name", new String("John sakr"));
-			htblColNameValue.put("gpa", Double.valueOf(1.0));
-			dbApp.insertIntoTable(strTableName, htblColNameValue);
+			// htblColNameValue.clear();
+			// htblColNameValue.put("id", Integer.valueOf(23498));
+			// htblColNameValue.put("name", new String("John sakr"));
+			// htblColNameValue.put("gpa", Double.valueOf(1.0));
+			// dbApp.insertIntoTable(strTableName, htblColNameValue);
 
-			htblColNameValue.clear();
-			htblColNameValue.put("id", Integer.valueOf(23499));
-			htblColNameValue.put("name", new String("John Noorb"));
-			htblColNameValue.put("gpa", Double.valueOf(0.11));
-			dbApp.insertIntoTable(strTableName, htblColNameValue);
-			System.out.println(dbApp);
+			// htblColNameValue.clear();
+			// htblColNameValue.put("id", Integer.valueOf(23499));
+			// htblColNameValue.put("name", new String("John Noorb"));
+			// htblColNameValue.put("gpa", Double.valueOf(0.11));
+			// dbApp.insertIntoTable(strTableName, htblColNameValue);
+			// System.out.println(dbApp);
 		} catch (Exception exp) {
 			System.out.println(exp.toString());
 		}
@@ -536,21 +543,21 @@ public class DBApp {
 		try {
 			Hashtable<String, Object> htblColNameValue = new Hashtable<>();
 
-			htblColNameValue.put("id", Integer.valueOf(453455));
+			htblColNameValue.put("id", Integer.valueOf(2));
 			htblColNameValue.put("name", "Ahmed Noor");
 			htblColNameValue.put("gpa", Double.valueOf(0.95));
 			dbApp.insertIntoTable(strTableName, htblColNameValue);
+			//  System.out.println(dbApp);
+		// 	 htblColNameValue.clear( );
+		// htblColNameValue.put("id", Integer.valueOf(23498));
+		// 	htblColNameValue.put("name", "John sakr");
+		// 	htblColNameValue.put("gpa", Double.valueOf(1.0));
+		// 	dbApp.deleteFromTable(strTableName, htblColNameValue);
 			System.out.println(dbApp);
-
 		} catch (Exception e) {
 			System.out.println(e.toString());
 		}
-		// htblColNameValue.clear( );
-		// htblColNameValue.put("id", Integer.valueOf( 665 ));
-		// htblColNameValue.put("name", new String("Nado" ) );
-		// htblColNameValue.put("gpa", Double.valueOf( 1.3 ) );
 
-		// dbApp.deleteFromTable("Student",htblColNameValue);
 		// System.out.println(dbApp);
 		// System.out.println(dbApp);
 		// SQLTerm[] arrSQLTerms;

@@ -17,30 +17,29 @@ public class Table implements Serializable {
         boolean flag = false;
         for (int i = 0; i < pageNums.size(); i++) {
             Page p = getPageByNumber(pageNums.get(i));
-            if (p.getTuples().get(p.getTuples().size() - 1).compareTo(row) <= 0) {
-
-                int low = 0;
-                int high = p.getTuples().size() - 1;
-                int mid;
-
-                while (low <= high) {
-                    mid = low + (high - low) / 2;
-                    Row tempTup = p.getTuples().get(mid);
-                    int com = row.compareTo(tempTup);
-                    if (com == 0) {
-                        flag = true;
-                    } else if (com < 0) {
-                        high = mid - 1;
-                    } else {
-                        low = mid + 1;
-                    }
+    
+            int low = 0;
+            int high = p.getTuples().size() - 1;
+            int mid;
+    
+            while (low <= high) {
+                mid = low + (high - low) / 2;
+                Row tempTup = p.getTuples().get(mid);
+                int com = row.compareTo(tempTup);
+                if (com == 0) {
+                    flag = true;
+                    return true; 
+                } else if (com < 0) {
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
                 }
-                savePage(p);
             }
-
+            savePage(p);
         }
         return flag;
     }
+    
 
     public void insertIntoTable(Row record) throws DBAppException {
         if (this.pageNums.size() == 0) {
@@ -172,7 +171,7 @@ public class Table implements Serializable {
             fileIn.close();
             return p;
         } catch (Exception e) {
-            throw new DBAppException(e);
+            throw new DBAppException("This Tree not avaliable: " + e.getMessage());
         }
 
     }
@@ -387,6 +386,7 @@ public class Table implements Serializable {
     }
 
     public static int comparePKs(String stringPK, Object realPK) throws DBAppException {
+        
         if (realPK instanceof String) {
             return stringPK.compareTo((String) realPK);
         } else if (realPK instanceof Integer) {
@@ -510,35 +510,40 @@ public class Table implements Serializable {
     }
 
     public void deleteRecord(Hashtable<String, Object> htblColNameValue) throws DBAppException {
-
         String pk = DBApp.getClusterKey(this.name).trim();
-        String strClusteringKeyValue = htblColNameValue.get(pk).toString();
+        String strClusteringKeyValue = htblColNameValue.get(pk.trim()).toString();
         Page pg = findPage(strClusteringKeyValue.trim());
         if (pk == null || pg == null) {
             throw new DBAppException("Check your inputs!!!");
         }
-
-        else {
-            int low = 0, high = pg.getTuples().size() - 1, mid = (low + high) / 2;
-            while (low <= high) {
-                mid = (low + high) / 2;
-                Row tempTup = pg.getTuples().get(mid);
-                Object midVal = tempTup.getValue(pk);
-                int com = comparePKs(strClusteringKeyValue.trim(), midVal);
-                if (com == 0 && isEqual(htblColNameValue, tempTup)) {
-                    deleteRow(mid, pg);
+        try{
+                int low = 0, high = pg.getTuples().size() - 1, mid = (low + high) / 2;int com=-1;
+                while (low <= high) {
+                    mid = (low + high) / 2;
+                    Row tempTup = pg.getTuples().get(mid);
+                    Object midVal = tempTup.getValue(pk);
+                    com= comparePKs(strClusteringKeyValue, midVal);
+                    if (com == 0 && isEqual(htblColNameValue, tempTup)) {
+                        deleteRow(mid, pg);
+                        break;
+                    }
+                    if (com < 0)
+                        high = mid - 1;
+                    else
+                        low = mid + 1;
+    
                 }
-                if (com < 0)
-                    high = mid - 1;
-                else
-                    low = mid + 1;
-
-            }
-            deleteBTree(htblColNameValue, strClusteringKeyValue);
+                if(com==0)
+                    deleteBTree(htblColNameValue, strClusteringKeyValue);
+    
+          
+        }
+        catch(DBAppException e){
+            throw new DBAppException("This Tuple isn't avaliable in this table");
 
         }
+      
 
-        throw new DBAppException("This Tuple isn't avaliable in this table");
 
     }
 
