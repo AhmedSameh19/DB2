@@ -301,10 +301,11 @@ public class Table implements Serializable {
         String pk = DBApp.getClusterKey(this.name).trim();
         for (int i = 0; i < pageNums.size(); i++) {
             Page pg = getPageByNumber(pageNums.get(i));
+            System.out.println(pg);
             Object val0 = pg.getTuples().get(0).getData().get(pk);
-
             Object val1 = pg.getTuples().get(pg.getTuples().size() - 1).getData().get(pk);
-            if (comparePKs(strClusteringKeyValue, val0) >= 0 && comparePKs(strClusteringKeyValue, val1) <= 0) {
+
+            if (comparePKs(strClusteringKeyValue.trim(), val0) >= 0 && comparePKs(strClusteringKeyValue.trim(), val1) <= 0) {
                 return pg;
             }
         }
@@ -314,7 +315,7 @@ public class Table implements Serializable {
     public void updateTable(Row record, String strClusteringKeyValue) throws DBAppException {
         String pk = DBApp.getClusterKey(this.name).trim();
         Page pg = updateme(strClusteringKeyValue);
-
+        System.out.println(pg);
         if (pg == null || pk == null) {
             throw new DBAppException("DOESNT EXIST");
         }
