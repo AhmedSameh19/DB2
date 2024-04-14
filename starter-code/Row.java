@@ -2,27 +2,32 @@ import java.io.Serializable;
 import java.util.Hashtable;
 import java.util.Map;
 
-public class Row  implements Serializable{
-    private Hashtable<String,Object> data;
+public class Row implements Serializable {
+    private Hashtable<String, Object> data;
     private String tableName;
-    
-    public Row(Hashtable<String,Object> data,String tableName){
-        this.tableName=tableName;
-        this.data=data;
+
+    public Row(Hashtable<String, Object> data, String tableName) {
+        this.tableName = tableName;
+        this.data = data;
 
     }
+
     public Hashtable<String, Object> getData() {
         return data;
     }
+
     public void setData(Hashtable<String, Object> data) {
         this.data = data;
     }
+
     public Object getValue(Object key) {
         return data.get(key);
     }
+
     public void setValue(String column, Object value) {
-        data.replace(column , value);
+        data.replace(column, value);
     }
+
     public int compareTo(Object o) throws DBAppException {
         String pk = DBApp.getClusterKey(this.tableName).trim();
         Object pkVal = data.get(pk);
@@ -34,7 +39,8 @@ public class Row  implements Serializable{
         else
             return ((Double) pkVal).compareTo((Double) t.getData().get(pk.trim()));
     }
-    public String toString(){
+
+    public String toString() {
         StringBuilder sb = new StringBuilder();
 
         for (Map.Entry<String, Object> entry : data.entrySet()) {
@@ -42,24 +48,26 @@ public class Row  implements Serializable{
         }
 
         // Remove the trailing comma and space if there are entries
-        sb.delete(sb.length()-2, sb.length());
-        
+        sb.delete(sb.length() - 2, sb.length());
 
         return sb.toString();
     }
-    // public static void main(String[] args) throws DBAppException {
-    //     Hashtable <String, Object> x=new Hashtable<>();
-    //     x.put("id", new Integer(0));
-    //     x.put("name", new String("Ahmed"));
-    //     x.put("gpa", new Double(5.9));
-    //     Row  r1 = new Row(x,"Student");
-    //     Hashtable <String, Object> z=new Hashtable<>();
-    //     z.put("id", new Integer(1));
-    //     z.put("name", new String("Sakr"));
-    //     z.put("gpa", new Double(2.2));
-    //     Row  r2 = new Row(z,"Student");
-    //     System.out.println( r1);
-    //     System.out.println("sakr".compareTo("ahmed"));
-    // }
-   
+
+    public static void main(String[] args) throws DBAppException {
+        Hashtable<String, Object> x = new Hashtable<>();
+        x.put("id", new Integer(2));
+        x.put("name", new String("Ahmed"));
+        x.put("gpa", new Double(5.9));
+        Row r1 = new Row(x, "aa");
+        Hashtable<String, Object> z = new Hashtable<>();
+        z.put("id", new Integer(1));
+        z.put("name", new String("Sakr"));
+        z.put("gpa", new Double(2.2));
+        Row r2 = new Row(z, "aa");
+        System.out.println(r2);
+
+        System.out.println(r1);
+        System.out.println(r2.compareTo(r1));
+    }
+
 }
