@@ -268,9 +268,8 @@ public class DBApp {
 			t.updateTable(tuple, strClusteringKeyValue);
 			saveTable(t);
 
-
-			// 	saveTable(t);
-			// 	throw new DBAppException("Error Updating record no avaliable row");
+			// saveTable(t);
+			// throw new DBAppException("Error Updating record no avaliable row");
 
 			// }
 		} catch (Exception e) {
@@ -290,9 +289,8 @@ public class DBApp {
 			Table t = getTable(strTableName);
 			Row r = new Row(htblColNameValue, strTableName);
 
-				t.deleteRecord(htblColNameValue);
-				saveTable(t);
-
+			t.deleteRecord(htblColNameValue);
+			saveTable(t);
 
 		} catch (DBAppException e) {
 			throw new DBAppException("Error deleting record: " + e.getMessage());
@@ -546,18 +544,16 @@ public class DBApp {
 
 			// htblColNameValue.put("id", Integer.valueOf(2));
 			// htblColNameValue.put("name", "Ahmed Noor");
-			// htblColNameValue.put("gpa", Double.valueOf(0.95));
+			// htblColNameValue.put("gpa", Double.valueOf(0.23));
 			// dbApp.insertIntoTable(strTableName, htblColNameValue);
-			System.out.println(
-				dbApp
-			);
-			htblColNameValue.clear();
-			htblColNameValue.put("id", Integer.valueOf(2));
-			htblColNameValue.put("name", new String("Ahmed Noor"));
-			htblColNameValue.put("gpa", Double.valueOf(0.95));
-
-			dbApp.deleteFromTable(strTableName, htblColNameValue);
 			System.out.println(dbApp);
+			htblColNameValue.clear();
+			// htblColNameValue.put("id", Integer.valueOf());
+			htblColNameValue.put("name", new String("Ahmed Sameh"));
+			htblColNameValue.put("gpa", Double.valueOf(2.5));
+
+			dbApp.updateTable(strTableName,"1", htblColNameValue);
+			// System.out.println(dbApp);
 		} catch (Exception e) {
 			System.out.println(e.toString());
 		}
@@ -589,7 +585,7 @@ public class DBApp {
 		// System.out.println(resultSet.next());
 		// }
 
-		// dbApp.createIndex(strTableName, "gpa", "gpaIndex" );
+		dbApp.createIndex(strTableName, "gpa", "gpaIndex");
 		// htblColNameValue.clear( );
 		// htblColNameValue.put("id", Integer.valueOf( 665 ));
 		// htblColNameValue.put("name", new String("Nado" ) );

@@ -315,7 +315,6 @@ public class Table implements Serializable {
     public void updateTable(Row record, String strClusteringKeyValue) throws DBAppException {
         String pk = DBApp.getClusterKey(this.name).trim();
         Page pg = updateme(strClusteringKeyValue);
-        System.out.println(pg);
         if (pg == null || pk == null) {
             throw new DBAppException("DOESNT EXIST");
         }
@@ -472,9 +471,7 @@ public class Table implements Serializable {
         return null;
     }
 
-    public void
-
-            updatePagesNumbers() throws DBAppException {
+    public void updatePagesNumbers() throws DBAppException {
         for (int i = 0; i < pageNums.size(); i++) {
             int pageNumber = pageNums.get(i);
             Page page = getPageByNumber(pageNumber);
@@ -705,6 +702,7 @@ public class Table implements Serializable {
 
         saveTree(myTree, strIndexName);
         indexNames.put(strColName, strIndexName);
+        System.out.println("Index Created Successfully");
     }
 
     public void saveTree(BPlusTree b, String strIndexName) throws DBAppException {
@@ -767,7 +765,7 @@ public class Table implements Serializable {
         // String path = "Pages/" + "Student" + "" + 3 + ".class";
         // File file = new File(path);
         // file.delete();
-        BPlusTree bp = getTree("idIndex");
-        System.out.println(bp);
+        BPlusTree bp = getTree("gpaIndex");
+        System.out.println(bp.search(1.9));
     }
 }

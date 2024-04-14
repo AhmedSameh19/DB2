@@ -1,3 +1,3 @@
-aa, gpa, java.lang.double, false, null, null
+aa, gpa, java.lang.double, false,gpaIndex,B+Tree
 aa, name, java.lang.String, false, null, null
 aa, id, java.lang.Integer, true, null, null
