@@ -478,11 +478,11 @@ public class DBApp {
 		String strTableName = "aa";
 		try {
 			Hashtable<String, String> htblColNameType = new Hashtable<>();
-			// htblColNameType.put("id", "java.lang.Integer");
-			// htblColNameType.put("name", "java.lang.String");
-			// htblColNameType.put("gpa", "java.lang.double");
-			// dbApp.createTable( strTableName, "id", htblColNameType );
-			// htblColNameType.clear();
+			htblColNameType.put("id", "java.lang.Integer");
+			htblColNameType.put("name", "java.lang.String");
+			htblColNameType.put("gpa", "java.lang.double");
+			dbApp.createTable( strTableName, "id", htblColNameType );
+			htblColNameType.clear();
 
 			htblColNameType.put("id", "java.lang.Integer");
 			htblColNameType.put("name", "java.lang.String");
@@ -493,36 +493,36 @@ public class DBApp {
 			System.out.println(ex.toString());
 		}
 		try {
-			// Hashtable<String, Object> htblColNameValue = new Hashtable<>();
-			// htblColNameValue.put("id", Integer.valueOf(2343432));
-			// htblColNameValue.put("name", "Ahmed Noor");
-			// htblColNameValue.put("gpa", Double.valueOf(0.95));
-			// dbApp.insertIntoTable(strTableName, htblColNameValue);
+			Hashtable<String, Object> htblColNameValue = new Hashtable<>();
+			htblColNameValue.put("id", Integer.valueOf(2343432));
+			htblColNameValue.put("name", "Ahmed Noor");
+			htblColNameValue.put("gpa", Double.valueOf(0.95));
+			dbApp.insertIntoTable(strTableName, htblColNameValue);
 
-			// htblColNameValue.clear();
-			// htblColNameValue.put("id", Integer.valueOf(453455));
-			// htblColNameValue.put("name", new String("Ahmed tarek"));
-			// htblColNameValue.put("gpa", Double.valueOf(0.95));
-			// dbApp.insertIntoTable(strTableName, htblColNameValue);
+			htblColNameValue.clear();
+			htblColNameValue.put("id", Integer.valueOf(453455));
+			htblColNameValue.put("name", new String("Ahmed tarek"));
+			htblColNameValue.put("gpa", Double.valueOf(0.95));
+			dbApp.insertIntoTable(strTableName, htblColNameValue);
 
-			// htblColNameValue.clear();
-			// htblColNameValue.put("id", Integer.valueOf(453452325));
-			// htblColNameValue.put("name", new String("Ahmed khaled"));
-			// htblColNameValue.put("gpa", Double.valueOf(1.9));
-			// dbApp.insertIntoTable(strTableName, htblColNameValue);
+			htblColNameValue.clear();
+			htblColNameValue.put("id", Integer.valueOf(453452325));
+			htblColNameValue.put("name", new String("Ahmed khaled"));
+			htblColNameValue.put("gpa", Double.valueOf(1.9));
+			dbApp.insertIntoTable(strTableName, htblColNameValue);
 
-			// htblColNameValue.clear();
-			// htblColNameValue.put("id", Integer.valueOf(23498));
-			// htblColNameValue.put("name", new String("John sakr"));
-			// htblColNameValue.put("gpa", Double.valueOf(1.0));
-			// dbApp.insertIntoTable(strTableName, htblColNameValue);
+			htblColNameValue.clear();
+			htblColNameValue.put("id", Integer.valueOf(23498));
+			htblColNameValue.put("name", new String("John sakr"));
+			htblColNameValue.put("gpa", Double.valueOf(1.0));
+			dbApp.insertIntoTable(strTableName, htblColNameValue);
 
-			// htblColNameValue.clear();
-			// htblColNameValue.put("id", Integer.valueOf(23499));
-			// htblColNameValue.put("name", new String("John Noorb"));
-			// htblColNameValue.put("gpa", Double.valueOf(0.11));
-			// dbApp.insertIntoTable(strTableName, htblColNameValue);
-			// System.out.println(dbApp);
+			htblColNameValue.clear();
+			htblColNameValue.put("id", Integer.valueOf(23499));
+			htblColNameValue.put("name", new String("John Noorb"));
+			htblColNameValue.put("gpa", Double.valueOf(0.11));
+			dbApp.insertIntoTable(strTableName, htblColNameValue);
+			System.out.println(dbApp);
 		} catch (Exception exp) {
 			System.out.println(exp.toString());
 		}
@@ -548,15 +548,15 @@ public class DBApp {
 			// dbApp.insertIntoTable(strTableName, htblColNameValue);
 			System.out.println(dbApp);
 			htblColNameValue.clear();
-			// htblColNameValue.put("id", Integer.valueOf());
-			htblColNameValue.put("name", new String("Ahmed Sameh"));
-			htblColNameValue.put("gpa", Double.valueOf(2.5));
+			htblColNameValue.put("name", new String("abdo"));
+			htblColNameValue.put("gpa", Double.valueOf(2.33));
 
-			dbApp.updateTable(strTableName,"1", htblColNameValue);
-			// System.out.println(dbApp);
+			dbApp.updateTable(strTableName,"453455", htblColNameValue);
+			System.out.println(dbApp);
 		} catch (Exception e) {
 			System.out.println(e.toString());
 		}
+		Hashtable<String, Object> htblColNameValue = new Hashtable<>();
 
 		// System.out.println(dbApp);
 		// System.out.println(dbApp);
@@ -585,7 +585,7 @@ public class DBApp {
 		// System.out.println(resultSet.next());
 		// }
 
-		dbApp.createIndex(strTableName, "gpa", "gpaIndex");
+		// dbApp.createIndex(strTableName, "gpa", "gpaIndex");
 		// htblColNameValue.clear( );
 		// htblColNameValue.put("id", Integer.valueOf( 665 ));
 		// htblColNameValue.put("name", new String("Nado" ) );
@@ -597,7 +597,7 @@ public class DBApp {
 		// htblColNameValue.put("gpa", Double.valueOf( 2.1 ) );
 		// dbApp.insertIntoTable( strTableName , htblColNameValue );
 		// dbApp.createIndex(strTableName, "id", "idIndex" );
-
+		// System.out.println(dbApp);
 		// System.out.println(readCsv(strTableName));
 	}
 

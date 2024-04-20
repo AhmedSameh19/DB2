@@ -17,18 +17,18 @@ public class Table implements Serializable {
         boolean flag = false;
         for (int i = 0; i < pageNums.size(); i++) {
             Page p = getPageByNumber(pageNums.get(i));
-    
+
             int low = 0;
             int high = p.getTuples().size() - 1;
             int mid;
-    
+
             while (low <= high) {
                 mid = low + (high - low) / 2;
                 Row tempTup = p.getTuples().get(mid);
                 int com = row.compareTo(tempTup);
                 if (com == 0) {
                     flag = true;
-                    return true; 
+                    return true;
                 } else if (com < 0) {
                     high = mid - 1;
                 } else {
@@ -39,7 +39,6 @@ public class Table implements Serializable {
         }
         return flag;
     }
-    
 
     public void insertIntoTable(Row record) throws DBAppException {
         if (this.pageNums.size() == 0) {
@@ -176,7 +175,7 @@ public class Table implements Serializable {
 
     }
 
-    private void insertRec(Row record, Page p) throws DBAppException {
+    public void insertRec(Row record, Page p) throws DBAppException {
         Vector<Row> tuples = p.getTuples();
         int low = 0, high = tuples.size() - 1, mid = (low + high) / 2;
         while (low <= high) {
@@ -301,11 +300,11 @@ public class Table implements Serializable {
         String pk = DBApp.getClusterKey(this.name).trim();
         for (int i = 0; i < pageNums.size(); i++) {
             Page pg = getPageByNumber(pageNums.get(i));
-            System.out.println(pg);
             Object val0 = pg.getTuples().get(0).getData().get(pk);
             Object val1 = pg.getTuples().get(pg.getTuples().size() - 1).getData().get(pk);
 
-            if (comparePKs(strClusteringKeyValue.trim(), val0) >= 0 && comparePKs(strClusteringKeyValue.trim(), val1) <= 0) {
+            if (comparePKs(strClusteringKeyValue.trim(), val0) >= 0
+                    && comparePKs(strClusteringKeyValue.trim(), val1) <= 0) {
                 return pg;
             }
         }
@@ -325,13 +324,15 @@ public class Table implements Serializable {
             Object midVal = tempTup.getValue(pk);
             int com = comparePKs(strClusteringKeyValue, midVal);
             if (com == 0) {
+                if (indexNames.size() > 0)
+                    updateBTree(tempTup, record, strClusteringKeyValue);
                 for (String str : record.getData().keySet()) {
                     tempTup.getData().replace(str, record.getData().get(str));
                 }
                 pg.setName("Pages/" + this.name + "" + pg.getPageNumber() + ".class");
 
                 savePage(pg);
-                updateBTree(record, strClusteringKeyValue);
+
                 return;
             }
             if (com < 0)
@@ -343,50 +344,120 @@ public class Table implements Serializable {
 
     }
 
-    private void updateBTree(Row record, String strClusteringKeyValue) throws DBAppException {
-        for (Object key : indexNames.keySet()) {
+    public void updateBTree(Row old, Row record, String strClusteringKeyValue) throws DBAppException {
+        String pk = DBApp.getClusterKey(this.name).trim();
+        Hashtable<String, Object> data = record.getData();
+        data.put(pk, strClusteringKeyValue.trim());
+        Row newRowToBeAdded = new Row(data, this.name);
+        Object toBeAdded = null;
+        for (String key : indexNames.keySet()) {
             String indexTableName = indexNames.get(key);
             BPlusTree t = getTree(indexTableName);
-            Vector<Row> returned = new Vector<>();
-            Object k = record.getData().get(key);
+            Vector<Row> returnedOld = new Vector<>();
+            Vector<Row> returnedNew = new Vector<>();
+
+            Object k = old.getData().get(key);
+            if (key.equalsIgnoreCase("id"))
+                toBeAdded = strClusteringKeyValue;
+            else
+                toBeAdded = record.getData().get(key.trim());
             if (k instanceof String) {
                 String k0 = (String) k.toString();
-                returned = (Vector<Row>) t.search(k0);
+                String z0 = (String) toBeAdded.toString();
+                returnedOld = (Vector<Row>) t.search(k0);
+                returnedNew = (Vector<Row>) t.search(z0);
             } else if (k instanceof Double) {
                 Double k1 = (Double) k;
-                returned = (Vector<Row>) t.search(k1);
+                Double z1 = (Double) toBeAdded;
+                returnedOld = (Vector<Row>) t.search(k1);
+                returnedNew = (Vector<Row>) t.search(z1);
+
             } else if (k instanceof Integer) {
                 Integer k2 = (Integer) k;
-                returned = (Vector<Row>) t.search(k2);
+                Integer z2 = Integer.parseInt((String) toBeAdded);
+                returnedOld = (Vector<Row>) t.search(k2);
+
+                returnedNew = (Vector<Row>) t.search(z2);
+
             } else {
                 throw new DBAppException("Unsupported key type");
             }
-            String pk = DBApp.getClusterKey(this.name);
-            for (Row r : returned) {
-                if (comparePKs(strClusteringKeyValue, (r.getData().get(pk.trim()))) == 0) {
-                    returned.remove(r);
-                    returned.add(record);
-                    Object z = k;
-                    if (z instanceof String) {
-                        String k8 = (String) z.toString();
-                        t.insert(k8, returned);
-                    } else if (z instanceof Double) {
-                        Double k6 = (Double) z;
-                        t.insert(k6, returned);
-                    } else if (z instanceof Integer) {
-                        Integer k7 = (Integer) z;
-                        t.insert(k7, returned);
-                    } else {
-                        throw new DBAppException("Unsupported key type");
-                    }
+           
+            if (returnedOld == null)
+                throw new DBAppException("Key not avaliable in the Tree ");
+
+            if (returnedNew == null) {
+                returnedNew = new Vector<>();
+                returnedNew.add(newRowToBeAdded);
+            } else {
+                returnedNew.add(newRowToBeAdded);
+
+            }
+
+            for (int i=0;i<returnedOld.size();i++) {
+                if(isEqual((returnedOld.get(i).getData()),old)){
+                   returnedOld.remove(i);
+
                 }
             }
+          
+
+            if (returnedOld.isEmpty()) {
+                if (k instanceof String) {
+                    String k0 = (String) k.toString();
+                    String z0 = (String) toBeAdded.toString();
+
+                    t.delete(k0);
+                    t.insert(z0, returnedNew);
+                } else if (k instanceof Double) {
+                    Double k1 = (Double) k;
+                    Double z1 = (Double) toBeAdded;
+
+                    t.delete(k1);
+                    t.insert(z1, returnedNew);
+                } else if (k instanceof Integer) {
+                    Integer k2 = (Integer) k;
+                    Integer z2 = Integer.parseInt((String) toBeAdded);
+
+                    t.delete(k2);
+                    t.insert(z2, returnedNew);
+
+                } else {
+                    throw new DBAppException("Unsupported key type");
+                }
+            } else {
+                if (k instanceof String) {
+                    String z1 = (String) k.toString();
+                    String z0 = (String) toBeAdded.toString();
+                    t.insert(z1, returnedOld);
+                    t.insert(z0, returnedNew);
+
+                } else if (k instanceof Double) {
+                    Double z2 = (Double) k;
+                    Double z1 = (Double) toBeAdded;
+
+                    t.insert(z2, returnedOld);
+                    t.insert(z1, returnedNew);
+
+                } else if (k instanceof Integer) {
+                    Integer z3 = (Integer) k;
+                    Integer z2 = Integer.parseInt((String) toBeAdded);
+
+                    t.insert(z3, returnedOld);
+                    t.insert(z2, returnedNew);
+
+                } else {
+                    throw new DBAppException("Unsupported key type");
+                }
+
+            }
+
             saveTree(t, indexTableName);
         }
     }
 
     public static int comparePKs(String stringPK, Object realPK) throws DBAppException {
-        
+
         if (realPK instanceof String) {
             return stringPK.compareTo((String) realPK);
         } else if (realPK instanceof Integer) {
@@ -514,34 +585,31 @@ public class Table implements Serializable {
         if (pk == null || pg == null) {
             throw new DBAppException("Check your inputs!!!");
         }
-        try{
-                int low = 0, high = pg.getTuples().size() - 1, mid = (low + high) / 2;int com=-1;
-                while (low <= high) {
-                    mid = (low + high) / 2;
-                    Row tempTup = pg.getTuples().get(mid);
-                    Object midVal = tempTup.getValue(pk);
-                    com= comparePKs(strClusteringKeyValue, midVal);
-                    if (com == 0 && isEqual(htblColNameValue, tempTup)) {
-                        deleteRow(mid, pg);
-                        break;
-                    }
-                    if (com < 0)
-                        high = mid - 1;
-                    else
-                        low = mid + 1;
-    
+        try {
+            int low = 0, high = pg.getTuples().size() - 1, mid = (low + high) / 2;
+            int com = -1;
+            while (low <= high) {
+                mid = (low + high) / 2;
+                Row tempTup = pg.getTuples().get(mid);
+                Object midVal = tempTup.getValue(pk);
+                com = comparePKs(strClusteringKeyValue, midVal);
+                if (com == 0 && isEqual(htblColNameValue, tempTup)) {
+                    deleteRow(mid, pg);
+                    break;
                 }
-                if(com==0)
-                    deleteBTree(htblColNameValue, strClusteringKeyValue);
-    
-          
-        }
-        catch(DBAppException e){
+                if (com < 0)
+                    high = mid - 1;
+                else
+                    low = mid + 1;
+
+            }
+            if (com == 0)
+                deleteBTree(htblColNameValue, strClusteringKeyValue);
+
+        } catch (DBAppException e) {
             throw new DBAppException("This Tuple isn't avaliable in this table");
 
         }
-      
-
 
     }
 
@@ -766,6 +834,6 @@ public class Table implements Serializable {
         // File file = new File(path);
         // file.delete();
         BPlusTree bp = getTree("gpaIndex");
-        System.out.println(bp.search(1.9));
+        System.out.println(bp.search(2.33));
     }
 }
